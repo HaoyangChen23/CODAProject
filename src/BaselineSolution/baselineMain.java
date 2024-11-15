@@ -6,66 +6,62 @@ import utilities.CommandLineParser;
 import utilities.Settings;
 import utilities.StopWatch;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
-public class baselinemain {
+public class baselineMain {
     public static void main(String[] args) {
         // parse the command line arguments
         CommandLineParser.parse(args);
 
-        if(Settings.isALL){
-        Searcher<String, String> sr = null;
-        StopWatch watch = new StopWatch();
-        watch.start();
+        if (Settings.isALL) {
+            Searcher<String, String> sr = null;
+            StopWatch watch = new StopWatch();
+            watch.start();
 
-        String graphFile = Settings.datasetsFolder + Settings.fileName;//knowledge graph file folder
-        String coreFile = Settings.datasetsFolder + Settings.coreFileName;//core pattern file folder
+            String graphFile = Settings.datasetsFolder + Settings.fileName;//knowledge graph file folder
+            String coreFile = Settings.datasetsFolder + Settings.coreFileName;//core pattern file folder
 
-        if (Settings.UB && !Settings.HMT) {
-            System.out.println("Don't have this solution !!!");
-            System.exit(1);
-        }
-        if (Settings.fileName == null || Settings.coreFileName == null) {
-            System.out.println("You have to specify a filename");
-            System.exit(1);
-        }
-
-        try {
-            //Initializations: graph loading
-            sr = new Searcher<String, String>(graphFile, coreFile);
-            // Optimization I: meta index
-            if (!Settings.HMT) {
-                sr.initialize();
+            if (Settings.UB && !Settings.HMT) {
+                System.out.println("Don't have this solution !!!");
+                System.exit(1);
             }
-            // Entrance
-            ArrayList<SearchLatticeNode<String, String>> result = sr.search();
+            if (Settings.fileName == null || Settings.coreFileName == null) {
+                System.out.println("You have to specify a filename");
+                System.exit(1);
+            }
 
-            watch.stop();
-            StopWatch genQueryTime = sr.getQueryTime();//elapsed time for query generation
-            double elapsedTime = watch.getElapsedTime()/1000.0 - genQueryTime.getElapsedTime()/1000.0;
-            DecimalFormat dtest1 = new DecimalFormat("0.000");
-            String runningTime = dtest1.format(elapsedTime);
-            System.out.println("elapsedTime of PatKG:"+runningTime);//elapsed time of this algorithm
+            try {
+                //Initializations: graph loading
+                sr = new Searcher<String, String>(graphFile, coreFile);
+                // Optimization I: meta index
+                if (!Settings.HMT) {
+                    sr.initialize();
+                }
+                // Entrance
+                ArrayList<SearchLatticeNode<String, String>> result = sr.search();
 
-            System.out.println("Now Evalute all the frequent core-based pattern by using CODA_baseline_ALLg" );
+                watch.stop();
+                StopWatch genQueryTime = sr.getQueryTime();//elapsed time for query generation
+                double elapsedTime = watch.getElapsedTime() / 1000.0 - genQueryTime.getElapsedTime() / 1000.0;
+                DecimalFormat dtest1 = new DecimalFormat("0.000");
+                String runningTime = dtest1.format(elapsedTime);
+                System.out.println("elapsedTime of PatKG:" + runningTime);//elapsed time of this algorithm
 
-            BaselineProcessor br = new BaselineProcessor<>();
+                System.out.println("Now Evalute all the frequent core-based pattern by using CODA_baseline_ALLg");
 
-            ArrayList<SearchLatticeNode<Integer, Integer>> topKPatterns = new ArrayList<>();
+                BaselineProcessor br = new BaselineProcessor<>();
 
-            topKPatterns =  br.selectTopKPatterns(result,Settings.k);
+                ArrayList<SearchLatticeNode<Integer, Integer>> topKPatterns = new ArrayList<>();
 
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+                topKPatterns = br.selectTopKPatterns(result, Settings.k);
 
-    }else if(Settings.isFSG){
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+        } else if (Settings.isFSG) {
 
             Searcher<String, String> sr = null;
             StopWatch watch = new StopWatch();
@@ -95,18 +91,18 @@ public class baselinemain {
 
                 watch.stop();
                 StopWatch genQueryTime = sr.getQueryTime();//elapsed time for query generation1
-                double elapsedTime = watch.getElapsedTime()/1000.0 - genQueryTime.getElapsedTime()/1000.0;
+                double elapsedTime = watch.getElapsedTime() / 1000.0 - genQueryTime.getElapsedTime() / 1000.0;
                 DecimalFormat dtest1 = new DecimalFormat("0.000");
                 String runningTime = dtest1.format(elapsedTime);
-                System.out.println("elapsedTime of PatKG:"+runningTime);//elapsed time of this algorithm
+                System.out.println("elapsedTime of PatKG:" + runningTime);//elapsed time of this algorithm
 
-                System.out.println("Now Evalute all the frequent core-based pattern by using CODA_baseline_FSGg" );
+                System.out.println("Now Evalute all the frequent core-based pattern by using CODA_baseline_FSGg");
 
                 BaselineProcessor br = new BaselineProcessor<>();
 
                 ArrayList<SearchLatticeNode<Integer, Integer>> topKPatterns = new ArrayList<>();
 
-                topKPatterns =  br.selectTopKPatterns(result,Settings.k);
+                topKPatterns = br.selectTopKPatterns(result, Settings.k);
 
             } catch (Exception e) {
                 // TODO Auto-generated catch block
@@ -114,21 +110,8 @@ public class baselinemain {
             }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
         }
-            // output: write txt files
+        // output: write txt files
 
 //            FileWriter fw;
 //            //out put file name
@@ -152,8 +135,6 @@ public class baselinemain {
 //                // TODO Auto-generated catch block
 //                e.printStackTrace();
 //            }
-
-
 
 
     }
