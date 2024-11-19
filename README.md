@@ -2,7 +2,7 @@
 
 ### 项目结构
 
-`src/main`, `src/model` 部分代码来自于 TED
+`src/main`, `src/model` 部分代码来自于 TED<br/>
 `CodeGenSrc` 部分代码来自于 FastPat+
 
 ### 相关项目
@@ -22,6 +22,16 @@ TED+:<br/>
 FastPat+:<br/>
 全称：Fast Core-based Top-[k](tex://k) Frequent Pattern Discovery in Knowledge Graphs<br/>
 代码：https://github.com/DBGroup-SUSTech/FastPat-KG
+
+### FastPat+ 使用的数据集
+
+| Dataset   | Nodes   | Distinct node labels | Edges   | Average degree |
+|-----------|---------|----------------------|---------|----------------|
+| Oscar     | 42K     | 11                   | 63K     | 3.00           |
+| WCGoals   | 49K     | 13                   | 158K    | 6.44           |
+| MiCo      | 100K    | 29                   | 1.08M   | 21.61          |
+| COVID-19  | 103K    | 28                   | 501K    | 9.69           |
+| YAGO3     | 1.37M   | 611                  | 2.86M   | 4.15           |
 
 ### 格式化 Java 代码 (Linux/Mac)
 

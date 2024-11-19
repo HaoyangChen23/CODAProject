@@ -19,8 +19,12 @@ public class testMain {
     StopWatch watch = new StopWatch();
     watch.start();
 
-    String graphFile = Settings.datasetsFolder + Settings.fileName; // Knowledge graph file folder
-    String coreFile = Settings.datasetsFolder + Settings.coreFileName; // Core pattern file folder
+    String graphFile =
+        Settings.datasetsFolder + "graph/" + Settings.fileName; // Knowledge graph file folder
+    String coreFile =
+        Settings.datasetsFolder
+            + "corePattern/"
+            + Settings.coreFileName; // Core pattern file folder
 
     File inFile = new File(graphFile);
     if (Settings.UB && !Settings.HMT) {
