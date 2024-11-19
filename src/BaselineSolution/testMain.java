@@ -22,8 +22,9 @@ public class testMain {
         StopWatch watch = new StopWatch();
         watch.start();
 
-        String graphFile = Settings.datasetsFolder + Settings.fileName;//knowledge graph file folder
-        String coreFile = Settings.datasetsFolder + Settings.coreFileName;//core pattern file folder
+        String graphFile = Settings.datasetsFolder + Settings.fileName; // knowledge graph file folder
+        String coreFile = Settings.datasetsFolder + Settings.coreFileName; // core pattern file folder
+
         File inFile = new File(graphFile);
         if (Settings.UB && !Settings.HMT) {
             System.out.println("Don't have this solution !!!");
@@ -36,7 +37,7 @@ public class testMain {
 
         try {
 ////////////////////////////////////生成所有的满足MNI的基于CorePatterns拓展的图模式///////////////////////////////////////////////////////////////
-            //Initializations: graph loading
+            // Initializations: graph loading
             sr = new Searcher<Integer, Integer>(graphFile, coreFile);
             // Optimization I: meta index
             if (!Settings.HMT) {
