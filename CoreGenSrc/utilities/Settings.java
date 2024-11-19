@@ -15,8 +15,8 @@ public class Settings {
 	public static boolean PRINT = false;
 
 	// datasets folder
-	public static String datasetsFolder = "D:/Projects/dataSets/";
-
+	public static String datasetsFolder = "/Users/leonchen/Nutstore Files/CODA_PREPARATION/CODA/dataSets/";
+// /Users/leonchen/Nutstore Files/CODA_PREPARATION/CODA/dataSets
 	// the filename
 //	public static String fileName = "Mico.lg";
 //	public static String fileName = "Yago.lg";
@@ -28,11 +28,11 @@ public class Settings {
 //	public static String coreFileName = "OscarQ1.lg";
 	public static String coreFileName = "OscarTest.lg";
 //	public static String coreFileName = "OscarQ3.lg";
-//	public static String coreFileName = "CovidTest.lg";
+//	public static String coreFileName = "CovidQTest.lg";
 //	public static String coreFileName = "YagoQ3.lg";
 
 	// parameters
-	public static int k = 5;
+	public static int k = 8;
 	public static double t =0.3;
 	public static boolean print = false;
 
@@ -51,9 +51,5 @@ public class Settings {
 	public static boolean TupleReduce = true;// with lemma 3
 	public static boolean greedy = true;// false: select the pattern nodeID:0
 	public static boolean earlyTermination = true;
-
-	//For testing two baseline solution of CODA
-	public static boolean isALL = false;
-	public static boolean isFSG = false;
 
 }

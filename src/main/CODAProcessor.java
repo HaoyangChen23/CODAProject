@@ -1,33 +1,42 @@
 package main;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
-import dataStructures.*;
-import search.SearchLatticeNode;
+import model.*;
+import model.SimpleDFSCode;
 
-public class CODAProcessor<NodeType, EdgeType> {
-    public ArrayList<SearchLatticeNode<NodeType, EdgeType>> Input;
-    private FileWriter os;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.Vector;
 
-    private Graph TRANS;
-    private DFSCode DFS_CODE;
-    private DFSCode DFS_CODE_IS_MIN;
+public class CODAProcessor {
+    private ArrayList<Graph> TRANS;
+    private SimpleDFSCode DFS_CODE;
+    private SimpleDFSCode DFS_CODE_IS_MIN;
     private Graph GRAPH_IS_MIN;
+
     private long ID;
     //private long minSup;
     //private long arg.minNodeNum;
     //private long arg.maxNodeNum;
-//    private boolean directed;
+    private boolean directed;
+    private FileWriter os;
     private ArrayList<Graph> allGraphs;
-    //    private HashMap<Integer, Set<Integer>> CoveredEdges_OriginalGraphs;
     private HashMap<Integer, Set<Integer>> CoveredEdges_OriginalGraphs;
-    private Set<Integer> allCoveredEdges;
+    private Set<Integer>            allCoveredEdges;
     private ArrayList<Set<Integer>> CoveredEdges_EachPattern;
     //// |priv(pattern)|: private edges for each pattern
     private ArrayList<Integer> Priv_pattern;
@@ -51,18 +60,18 @@ public class CODAProcessor<NodeType, EdgeType> {
     ///// [edgeid] = set<Integer>, it indicates the patterns that contains the edge with  edgeid
     private HashMap<Integer, Set<Integer>> PatternsID_edges;
 
-    public CODAProcessor(HashMap<Integer, Set<Integer>> coveredEdgesOriginalGraphs) {
-        CoveredEdges_OriginalGraphs = coveredEdgesOriginalGraphs;
-        TRANS = new Graph();
-        DFS_CODE = new DFSCode();
-        DFS_CODE_IS_MIN = new DFSCode();
+    public CODAProcessor(Arguments arg) {
+        TRANS = new ArrayList<>();
+        DFS_CODE = new SimpleDFSCode();
+        DFS_CODE_IS_MIN = new SimpleDFSCode();
         GRAPH_IS_MIN = new Graph();
         singleVertex = new TreeMap<>();
         singleVertexLabel = new TreeMap<>();
         /////////////////////////////////////////////////
-        //allDFSCodes = new ArrayList<DFSCode>();
+        //allDFSCodes = new ArrayList<SimpleDFSCode>();
         allGraphs = new ArrayList<Graph>();
         allCoveredEdges = new HashSet<Integer>();
+        CoveredEdges_OriginalGraphs = new HashMap<Integer, Set<Integer>>();
         Priv_pattern = new ArrayList<Integer>();
         Rcov_edge    = new HashMap<Integer, Set<Integer>>();
         numberofcovered = 0;
@@ -77,10 +86,9 @@ public class CODAProcessor<NodeType, EdgeType> {
     void run(FileReader reader, FileWriter writers, Arguments arguments) throws IOException {
         os = writers;
         ID = 0;
+        directed = false;
         arg = arguments;
-
         read(reader);
-
         Long Time1 = System.currentTimeMillis();
         if(arg.hasInitialPatternGenerator && !arg.strategy.equals("greedy")) {
             InitialPatternGenerator();
@@ -88,6 +96,12 @@ public class CODAProcessor<NodeType, EdgeType> {
         Long Time2 = System.currentTimeMillis();
         System.out.println("InitialPatternGenerator Time(s) : " + (Time2 - Time1)*1.0 /1000);
 
+        runIntern();
+
+        // reportIndexSize();
+
+        Long Time3 = System.currentTimeMillis();
+        System.out.println("Swapping Time(s) : " + (Time3 - Time2)*1.0 /1000);
 
         if(!arg.strategy.equals("greedy")) {
             int count = 0;
@@ -96,8 +110,9 @@ public class CODAProcessor<NodeType, EdgeType> {
             }
             System.out.println("TopK, After Swapping, Number of covered edges: " + allCoveredEdges.size());
             int totalegdes = 0;
-            TRANS.getEdgeSize();
-
+            for(int i=0;i< TRANS.size();i++) {
+                totalegdes += TRANS.get(i).getEdgeSize();
+            }
             System.out.println("totalegdes : " +  totalegdes);
             System.out.println("Coverage rate : " + allCoveredEdges.size()*1.0 / totalegdes);
         }else {
@@ -152,12 +167,129 @@ public class CODAProcessor<NodeType, EdgeType> {
 
             System.out.println("Greedy,  Number of covered edges: " + countofcoverededges);
             int totalegdes = 0;
-
-                totalegdes = TRANS.getEdgeSize();
-
+            for(int i=0;i< TRANS.size();i++) {
+                totalegdes += TRANS.get(i).getEdgeSize();
+            }
             System.out.println("totalegdes : " +  totalegdes);
             System.out.println("Coverage rate : " + countofcoverededges*1.0 / totalegdes);
         }
+    }
+    private void  reportIndexSize(){
+        File outFile = new File("IndexTest");
+        try (FileWriter writer = new FileWriter(outFile)) {
+            for (Map.Entry<Integer, Set<Integer>> entry : Rpriv_i.entrySet()) {
+                for(Integer e: entry.getValue())
+                    writer.write(e);
+                //writer.write("\r\n");
+            }
+            // writer.write("***********\r\n");
+            writer.write(Priv_pattern.toString()+"\r\n");
+            for (Map.Entry<Integer, Set<Integer>> entry : Rcov_edge.entrySet()) {
+                for(Integer e: entry.getValue())
+                    writer.write(e);
+                // writer.write("\r\n");
+            }
+            // writer.write("***********\r\n");
+
+            // private HashMap<Integer, Set<Integer>> CoveredEdges_OriginalGraphs;
+            for (Map.Entry<Integer, Set<Integer>> entry : CoveredEdges_OriginalGraphs.entrySet()) {
+                //writer.write("ssss" + "\r\n");
+                for(Integer e: entry.getValue())
+                    writer.write(e);
+                // writer.write("\r\n");
+            }
+
+            //private Set<Integer>            allCoveredEdges;
+            //private ArrayList<Set<Integer>> CoveredEdges_EachPattern;
+            //// |priv(pattern)|: private edges for each pattern
+
+
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        //  System.out.println("Index Maintenance Time: " + arg.maintainTime);
+    }
+
+    public int getLossScore(Set<Integer> dropededges, Long deleteid) {
+        int loss_count = 0;
+
+        Set<Integer> set_temp  =  new HashSet<Integer>();
+        for (Long key : CoveredEdges_patterns.keySet()) {
+            if(key != deleteid)
+                set_temp.addAll(CoveredEdges_patterns.get(key));
+        }
+        Iterator it = dropededges.iterator();
+        while(it.hasNext()){
+            Integer edgeid  = (Integer)it.next();
+            if(!set_temp.contains(edgeid))  {
+                loss_count++;
+            }
+        }
+        return loss_count;
+    }
+
+    private void read(FileReader is) throws IOException {
+        //int num = 0;
+        int count = 0;
+        BufferedReader read = new BufferedReader(is);
+        while (true) {
+            Graph g = new Graph(directed);
+            read = g.read(read);
+            if (g.isEmpty())
+                break;
+            TRANS.add(g);
+            count++;
+            //if(count!= 23019 && count!= 22812)
+            // num += g.getEdgeSize();
+
+            if(count == arg.numberofgraphs) break;
+        }
+        read.close();
+        // System.out.println("total edges: " + num);
+    }
+
+    private void  InitialPatternGenerator() throws IOException {
+        ArrayList<Edge> edges = new ArrayList<>();
+        NavigableMap<Integer, NavigableMap<Integer, NavigableMap<Integer, Projected>>> root = new TreeMap<>();
+        for (int id = 0; id < TRANS.size(); ++id) {
+            Graph g = TRANS.get(id);
+            for (int from = 0; from < g.size(); ++from) {
+                if (Misc.getForwardRoot(g, g.get(from), edges)) {
+                    for (Edge it : edges) {
+                        int key_1 = g.get(from).label;
+                        NavigableMap<Integer, NavigableMap<Integer, Projected>> root_1 = root.computeIfAbsent(key_1, k -> new TreeMap<>());
+                        int key_2 = it.eLabel;
+                        NavigableMap<Integer, Projected> root_2 = root_1.computeIfAbsent(key_2, k -> new TreeMap<>());
+                        int key_3 = g.get(it.to).label;
+                        Projected root_3 = root_2.get(key_3);
+                        if (root_3 == null) {
+                            root_3 = new Projected();
+                            root_2.put(key_3, root_3);
+                        }
+                        root_3.push(id, it, null);
+                    }
+                }
+            }
+        }
+        for (Entry<Integer, NavigableMap<Integer, NavigableMap<Integer, Projected>>> fromLabel : root.entrySet()) {
+            for (Entry<Integer, NavigableMap<Integer, Projected>> eLabel : fromLabel.getValue().entrySet()) {
+                for (Entry<Integer, Projected> toLabel : eLabel.getValue().entrySet()) {
+                    DFS_CODE.push(0, 1, fromLabel.getKey(), eLabel.getKey(), toLabel.getKey());
+                    project_Initial(toLabel.getValue());
+                    DFS_CODE.pop();
+                }
+            }
+        }
+        System.out.println("After Initial Swapping, Number of covered edges: " + allCoveredEdges.size());
+        int totalegdes = 0;
+        for(int i=0;i< TRANS.size();i++) {
+            totalegdes += TRANS.get(i).getEdgeSize();
+        }
+        System.out.println("totalegdes : " +  totalegdes);
+        System.out.println("Coverage rate : " + allCoveredEdges.size()*1.0 / totalegdes);
+        System.out.println("numberofcovered : " +  numberofcovered);
     }
 
     private void  runIntern() throws IOException {
@@ -168,9 +300,9 @@ public class CODAProcessor<NodeType, EdgeType> {
              * processing cannot find sub-graphs of size |sub-g|==1. Hence, we
              * find frequent node labels explicitly.
              */
-            int id = 0; // 单一大图
-                for (int nid = 0; nid < TRANS.size(); ++nid) {
-                    int key = TRANS.get(nid).label;
+            for (int id = 0; id < TRANS.size(); ++id) {
+                for (int nid = 0; nid < TRANS.get(id).size(); ++nid) {
+                    int key = TRANS.get(id).get(nid).label;
                     //note: if singleVertex.get(id) is null, assign new TreeMap<>() to the key, ie, id
                     singleVertex.computeIfAbsent(id, k -> new TreeMap<>());
                     if (singleVertex.get(id).get(key) == null) {
@@ -179,7 +311,7 @@ public class CODAProcessor<NodeType, EdgeType> {
                     }
                     singleVertex.get(id).put(key, Common.getValue(singleVertex.get(id).get(key)) + 1);
                 }
-
+            }
         }
         /*
          * All minimum support node labels are frequent 'sub-graphs'.
@@ -192,7 +324,7 @@ public class CODAProcessor<NodeType, EdgeType> {
             int frequent_label = it.getKey();
 
             // Found a frequent node label, report it.
-            Graph g = new Graph();
+            Graph g = new Graph(directed);
             Vertex v = new Vertex();
             v.label = frequent_label;
             g.add(v);
@@ -215,9 +347,8 @@ public class CODAProcessor<NodeType, EdgeType> {
         // note: [vertex1.label][eLabel][vertex2.label] = Projected
         NavigableMap<Integer, NavigableMap<Integer, NavigableMap<Integer, Projected>>> root = new TreeMap<>();
 
-
-            Graph g = TRANS;
-            int id = 0;
+        for (int id = 0; id < TRANS.size(); ++id) {
+            Graph g = TRANS.get(id);
             for (int from = 0; from < g.size(); ++from) {
                 if (Misc.getForwardRoot(g, g.get(from), edges)) {
                     for (Edge it : edges) {
@@ -235,7 +366,7 @@ public class CODAProcessor<NodeType, EdgeType> {
                     }
                 }
             }
-
+        }
 
         for (Entry<Integer, NavigableMap<Integer, NavigableMap<Integer, Projected>>> fromLabel : root.entrySet()) {
             for (Entry<Integer, NavigableMap<Integer, Projected>> eLabel : fromLabel.getValue().entrySet()) {
@@ -253,133 +384,33 @@ public class CODAProcessor<NodeType, EdgeType> {
         }
     }
 
+    private void reportSingle(Graph g, NavigableMap<Integer, Integer> nCount) throws IOException {
+        int sup = 0;
 
-    public int getLossScore(Set<Integer> dropededges, Long deleteid) {
-        int loss_count = 0;
+        // note: total occurrences, [graph] = nCount
+        for (Entry<Integer, Integer> it : nCount.entrySet()) {
+            sup += Common.getValue(it.getValue());
+        }
 
-        Set<Integer> set_temp  =  new HashSet<Integer>();
-        for (Long key : CoveredEdges_patterns.keySet()) {
-            if(key != deleteid)
-                set_temp.addAll(CoveredEdges_patterns.get(key));
-        }
-        Iterator it = dropededges.iterator();
-        while(it.hasNext()){
-            Integer edgeid  = (Integer)it.next();
-            if(!set_temp.contains(edgeid))  {
-                loss_count++;
-            }
-        }
-        return loss_count;
+        if ( arg.maxNodeNum  > arg.minNodeNum && g.size() > arg.maxNodeNum)
+            return;
+        if (arg.minNodeNum > 0 && g.size() < arg.minNodeNum)
+            return;
+
+        os.write("t # " + ID + " * " + sup + System.getProperty("line.separator"));
+        g.write(os);
+        ID++;
     }
 
-    private void read(FileReader is) throws IOException {
-
-        BufferedReader read = new BufferedReader(is);
-
-//      count：计数变量，用于记录读取的图数量。
-//	   	BufferedReader read：使用 BufferedReader 包装 FileReader，提高读取效率。
-
-        while (true) {
-            Graph g = new Graph();
-            read = g.read(read);
-            if (g.isEmpty())
-                break;
-            this.TRANS = g ;
-        }
-//        创建图对象 g：循环中每次创建一个新的 Graph 对象。
-//		g.read(read)：调用 Graph 类的 read 方法，解析文件中的图数据。
-//		read 方法返回一个更新后的 BufferedReader，用于读取下一个图。
-//		检查图是否为空：如果 g.isEmpty() 返回 true，表示已到文件末尾，停止读取。
-//		添加图到 TRANS：将解析后的图对象 g 添加到 TRANS 列表中。
-//		更新计数并检查条件：count 自增，如果已达到 arg.numberofgraphs，则跳出循环，停止读取。
-
-
-        read.close();
-//        关闭bufferreader以释放资源
-        // System.out.println("total edges: " + num);
-    }
-
-    private void  InitialPatternGenerator() throws IOException {
-
-//           初始化 root 结构并遍历图集合
-        ArrayList<Edge> edges = new ArrayList<>();
-        NavigableMap<Integer, NavigableMap<Integer, NavigableMap<Integer, Projected>>> root = new TreeMap<>();
-
-
-
-            Graph g = TRANS;
-            int id = 0;
-            for (int from = 0; from < g.size(); ++from) {
-                if (main.Misc.getForwardRoot(g, g.get(from), edges)) {
-                    for (Edge it : edges) {
-                        int key_1 = g.get(from).label;
-                        NavigableMap<Integer, NavigableMap<Integer, Projected>> root_1 = root.computeIfAbsent(key_1, k -> new TreeMap<>());
-                        int key_2 = it.eLabel;
-                        NavigableMap<Integer, Projected> root_2 = root_1.computeIfAbsent(key_2, k -> new TreeMap<>());
-                        int key_3 = g.get(it.to).label;
-                        Projected root_3 = root_2.get(key_3);
-                        if (root_3 == null) {
-                            root_3 = new Projected();
-                            root_2.put(key_3, root_3);
-                        }
-                        root_3.push(id, it, null);
-                    }
-                }
-            }
-
-//        root 结构：root 是一个嵌套的映射结构，用于存储每条边的投影信息。
-//        遍历图集合：循环 TRANS 中的每个图 g，再遍历图中每个节点 from。
-//        Misc.getForwardRoot：获取从当前节点出发的所有边，将结果存储在 edges 中。
-//              如果 g 中存在从 from 出发的边，继续处理 edges 中的每条边 it。
-//        填充 root 结构：对于每条边 it，根据 from 节点标签、边标签、目标节点标签，将 Projected 对象按层级存储在 root 中。
-//               Projected 对象：包含当前图的 ID 和边的相关信息。
-
-        for (Entry<Integer, NavigableMap<Integer, NavigableMap<Integer, Projected>>> fromLabel : root.entrySet()) {
-            for (Entry<Integer, NavigableMap<Integer, Projected>> eLabel : fromLabel.getValue().entrySet()) {
-                for (Entry<Integer, Projected> toLabel : eLabel.getValue().entrySet()) {
-                    DFS_CODE.push(0, 1, fromLabel.getKey(), eLabel.getKey(), toLabel.getKey());
-                    project_Initial(toLabel.getValue());
-                    DFS_CODE.pop();
-                }
-            }
-        }
-//        遍历 root：遍历 root 中的每个三层映射结构，逐层获取 fromLabel（起始节点标签）、eLabel（边标签）、toLabel（目标节点标签）。
-//        构建初始 DFS 模式：使用 DFS_CODE.push 方法，将 fromLabel、eLabel 和 toLabel 推入 DFS_CODE，构成初始的模式结构。
-//        调用 project_Initial：处理 toLabel 中的投影信息，生成完整模式。
-//        DFS_CODE.pop：处理完当前模式后，将该模式从 DFS_CODE 中弹出，准备处理下一个模式。
-
-
-        System.out.println("After Initial Swapping, Number of covered edges: " + allCoveredEdges.size());
-        int totalegdes = 0;
-
-        totalegdes = TRANS.getEdgeSize();
-
-        System.out.println("totalegdes : " +  totalegdes);
-        System.out.println("Coverage rate : " + allCoveredEdges.size()*1.0 / totalegdes);
-        System.out.println("numberofcovered : " +  numberofcovered);
-
-//        统计覆盖边信息：
-//        allCoveredEdges.size()：输出已覆盖的边数量。
-//        totalegdes：计算图集合中所有图的总边数。
-//        Coverage rate：计算覆盖率，即 allCoveredEdges.size() 除以总边数。
-//        numberofcovered：输出被覆盖的独特边数。
-
-
-    }
 
     private void newreport(Graph g, int id) throws IOException {
         // Filter to small/too large graphs.
         int sup = 0;
         int ID = id;
-
-//        int sup = 0;：支持度 sup 被初始化为 0，表明在此方法中没有实际计算支持度值。
-//        int ID = id;：将传入的 id 赋值给 ID，用于记录模式的标识。
         //  Graph g = new Graph(directed);
         //  code.toGraph(g);
         os.write("Final t # " + ID + " * " + sup + System.getProperty("line.separator"));
-//        将模式的基本信息写入输出流 os
         g.write(os);
-//        调用 g 的 write 方法，将图的详细信息写入 os 输出流中。
         ++ID;
     }
     private void newreportbeforeswap(Graph g, int id) throws IOException {
@@ -447,15 +478,12 @@ public class CODAProcessor<NodeType, EdgeType> {
         // update  CoveredEdges_OriginalGraphs
         CoveredEdges_OriginalGraphs.clear();
         for(Integer edgeid : allCoveredEdges) {
-//            Integer gid = edgeid / 1000;
-            Set<Integer>  temp = CoveredEdges_OriginalGraphs.get(0);
+            Integer gid = edgeid / 1000;
+            Set<Integer>  temp = CoveredEdges_OriginalGraphs.get(gid);
             if(temp == null) temp = new  HashSet<Integer>();
             temp.add(edgeid);
-            CoveredEdges_OriginalGraphs.put(0, temp);
+            CoveredEdges_OriginalGraphs.put(gid, temp);
         }
-
-
-
 
         //Priv_pattern.remove(deleteid);
         Priv_pattern.set(deleteid, -1);
@@ -478,15 +506,13 @@ public class CODAProcessor<NodeType, EdgeType> {
     public void Insert(Projected projected, int insertid) {
         //Long Time1 = System.currentTimeMillis();
         //System.out.println("Insert");
-        Graph g = new Graph();
+        Graph g = new Graph(directed);
         DFS_CODE.toGraph(g);
         if(allGraphs.size() < arg.numberofpatterns) allGraphs.add(g);
         else allGraphs.set(insertid, g);
-
         Set<Integer> coverededges_pattern = new HashSet<Integer>();
         if(Priv_pattern.size() < arg.numberofpatterns) Priv_pattern.add(0);
         else Priv_pattern.set(insertid,  0);
-
         for (PDFS aProjected : projected) {
             int id = aProjected.id;
             //System.out.println("id:" + id);
@@ -503,9 +529,7 @@ public class CODAProcessor<NodeType, EdgeType> {
             }else {
                 CoveredEdges_OriginalGraphs.put(id, tempedges);
             }
-
         }
-
         if(CoveredEdges_EachPattern.size() < arg.numberofpatterns) CoveredEdges_EachPattern.add(coverededges_pattern);
         else CoveredEdges_EachPattern.set(insertid, coverededges_pattern);
         for (int temp : coverededges_pattern ) {
@@ -553,7 +577,7 @@ public class CODAProcessor<NodeType, EdgeType> {
     }
 
     public void InsertWithSimpleIndex(Projected projected, int insertid) {
-        Graph g = new Graph();
+        Graph g = new Graph(directed);
         DFS_CODE.toGraph(g);
         if(allGraphs.size() < arg.numberofpatterns) allGraphs.add(g);
             //else allGraphs.set(insertid, g);
@@ -564,11 +588,8 @@ public class CODAProcessor<NodeType, EdgeType> {
             int id = aProjected.id;
             Set<Integer> tempedges = new HashSet<Integer>();
             for (PDFS p = aProjected; p != null; p = p.prev) {
-               Integer temp = 1000 * id + p.edge.id;
-
+                Integer temp = 1000 * id + p.edge.id;
                 coverededges_pattern.add(temp);
-
-//                更新 PatternsID_edges：记录每条边被哪些模式覆盖
                 if(PatternsID_edges.containsKey(temp)) {
                     Set<Integer> temppatternids = PatternsID_edges.get(temp);
                     temppatternids.add(id);
@@ -588,31 +609,10 @@ public class CODAProcessor<NodeType, EdgeType> {
                 CoveredEdges_OriginalGraphs.put(id, tempedges);
             }
 
-
-
-
         }
         CoveredEdges_patterns.put((long) insertid, coverededges_pattern);
 
         //System.out.println("allCoveredEdges Size: " + allCoveredEdges.size());
-    }
-
-    private void reportSingle(Graph g, NavigableMap<Integer, Integer> nCount) throws IOException {
-        int sup = 0;
-
-        // note: total occurrences, [graph] = nCount
-        for (Entry<Integer, Integer> it : nCount.entrySet()) {
-            sup += Common.getValue(it.getValue());
-        }
-
-        if ( arg.maxNodeNum  > arg.minNodeNum && g.size() > arg.maxNodeNum)
-            return;
-        if (arg.minNodeNum > 0 && g.size() < arg.minNodeNum)
-            return;
-
-        os.write("t # " + ID + " * " + sup + System.getProperty("line.separator"));
-        g.write(os);
-        ID++;
     }
 
     public  Boolean reportwithCoveredEdges(int sup, Projected projected) throws IOException {
@@ -626,6 +626,7 @@ public class CODAProcessor<NodeType, EdgeType> {
 
             if(arg.isPESIndex) Insert(projected, allGraphs.size());
             else if(arg.isSimpleIndex)  InsertWithSimpleIndex(projected, allGraphs.size()) ;
+            else ;
 
             if(allGraphs.size()  == arg.numberofpatterns) {
                 int count = 0;
@@ -635,7 +636,7 @@ public class CODAProcessor<NodeType, EdgeType> {
                 System.out.println("Before Swapping, Number of covered edges: " + allCoveredEdges.size());
                 int totalegdes = 0;
                 for(int i=0;i< TRANS.size();i++) {
-                    totalegdes += TRANS.getEdgeSize();
+                    totalegdes += TRANS.get(i).getEdgeSize();
                 }
                 System.out.println("totalegdes : " +  totalegdes);
                 System.out.println("Coverage rate : " + allCoveredEdges.size()*1.0 / totalegdes);
@@ -742,7 +743,7 @@ public class CODAProcessor<NodeType, EdgeType> {
                     allGraphs.get(patternid_min).write(os);
 
                     // update allAllGraphs
-                    Graph g = new Graph();
+                    Graph g = new Graph(directed);
                     DFS_CODE.toGraph(g);
                     allGraphs.set(patternid_min, g);
 
@@ -760,11 +761,11 @@ public class CODAProcessor<NodeType, EdgeType> {
                     // update  CoveredEdges_OriginalGraphs
                     CoveredEdges_OriginalGraphs.clear();
                     for(Integer edgeid : allCoveredEdges) {
-//                        Integer gid = edgeid / 1000;
-                        Set<Integer>  temp = CoveredEdges_OriginalGraphs.get(0);
+                        Integer gid = edgeid / 1000;
+                        Set<Integer>  temp = CoveredEdges_OriginalGraphs.get(gid);
                         if(temp == null) temp = new  HashSet<Integer>();
                         temp.add(edgeid);
-                        CoveredEdges_OriginalGraphs.put(0, temp);
+                        CoveredEdges_OriginalGraphs.put(gid, temp);
                     }
 
 
@@ -808,48 +809,35 @@ public class CODAProcessor<NodeType, EdgeType> {
         return false;
     }
 
-
-
     public  void reportwithCoveredEdges_Initial(int sup, Projected projected) throws IOException {
         // Filter to small/too large graphs.
         if (arg.maxNodeNum > arg.minNodeNum && DFS_CODE.countNode() > arg.maxNodeNum)
             return;
         if (arg.minNodeNum > 0 && DFS_CODE.countNode() < arg.minNodeNum)
             return;
-//        模式大小过滤：如果当前模式节点数超过 maxNodeNum 或小于 minNodeNum，则忽略该模式。
 
-//      处理初始模式集合
+        //////////////////////////////////
         if(allGraphs.size() <  arg.numberofpatterns) {
 
-            Graph g = new Graph();
+            Graph g = new Graph(directed);
             DFS_CODE.toGraph(g);
             os.write("Initial****t # " + allGraphs.size() + " * " + sup + System.getProperty("line.separator"));
             g.write(os);
 
-//		创建图对象 g：将 DFS_CODE 转换为图对象。
-//		输出初始模式信息：将模式信息写入 os 输出流，方便记录当前支持度和模式 ID。
-
-//      插入新模式
             if(arg.isPESIndex) Insert(projected, allGraphs.size());
             else if(arg.isSimpleIndex)  InsertWithSimpleIndex(projected, allGraphs.size()) ;
             else ;
             //System.out.println("allCoveredEdges.size(): " + allCoveredEdges.size());
-
-//      检查是否达到最大模式数并报告覆盖信息
             if(allGraphs.size()  == arg.numberofpatterns) {
                 int count = 0;
                 for(Graph tempg : allGraphs) {
                     newreportbeforeswap(tempg, count++);
                 }
                 System.out.println("Before Swapping, Number of covered edges: " + allCoveredEdges.size());
-
-//      报告覆盖信息：当模式集合达到 numberofpatterns 阈值时，报告所有模式的初始覆盖情况，并计算覆盖率。
-
-//      在 SimpleIndex 模式下选择损失最小的模式
                 int totalegdes = 0;
-
-                totalegdes = TRANS.getEdgeSize();
-
+                for(int i=0;i< TRANS.size();i++) {
+                    totalegdes += TRANS.get(i).getEdgeSize();
+                }
                 System.out.println("totalegdes : " +  totalegdes);
                 System.out.println("Coverage rate : " + allCoveredEdges.size()*1.0 / totalegdes);
 
@@ -866,16 +854,10 @@ public class CODAProcessor<NodeType, EdgeType> {
                     }
                     minimumpattern_score  =  loss_score_min;
                     minimumpattern_id = patternid_min;
-
-//                 最小损失分数模式：
-//                 在 SimpleIndex 模式下，计算每个模式的损失分数，选择损失分数最小的模式作为候选，用于可能的替换。
                 }
             }
         }
         else {
-//            计算收益分数并决定是否替换
-//            在 PESIndex 和 SimpleIndex 模式下分别处理：
-//            PESIndex 模式下的替换逻辑
             /// 1. calculate benefit score
             int benefit_score = 0;
             //// 2. calculate minimum loss score
@@ -898,9 +880,7 @@ public class CODAProcessor<NodeType, EdgeType> {
                 }
                 patternid_min = minimumpattern_id;
                 loss_score_min = minimumpattern_score;
-//             收益分数计算：遍历 projected 中的覆盖边，计算该模式带来的新增覆盖边数 benefit_score。
 
-//             判断替换条件
                 Boolean swapflag = false;
                 if(arg.swapcondition.equals("swap1")) {
                     if(benefit_score > 2* loss_score_min ) {
@@ -915,10 +895,6 @@ public class CODAProcessor<NodeType, EdgeType> {
                         swapflag = true;
                     }
                 }
-//             交换条件：
-//             根据 swapcondition 的值，计算不同的替换条件。
-//             如果 benefit_score 超过某个条件阈值，则将 swapflag 设置为 true，表示需要执行替换。
-
                 if(swapflag) {
                     os.write(patternid_min + " is swapped out!");
                     os.write("Initial Swapping, benefit_score: " + benefit_score + ", loss_score_min: " + loss_score_min );
@@ -927,12 +903,6 @@ public class CODAProcessor<NodeType, EdgeType> {
                     Delete(patternid_min);
                     Insert(projected, patternid_min);
                 }
-
-//             执行替换：如果满足替换条件，写入日志信息，并调用 Delete 和 Insert 方法删除旧模式并插入新模式。
-
-
-//                 SimpleIndex 模式下的替换逻辑:
-//                 与 PESIndex 类似，区别在于 SimpleIndex 使用 getBenefitScore 计算收益分数，并更新覆盖边集合。
             }else if(arg.isSimpleIndex) {
                 Set<Integer> coverededges_pattern = new HashSet<Integer>();
                 for (PDFS aProjected : projected) {
@@ -967,7 +937,7 @@ public class CODAProcessor<NodeType, EdgeType> {
                     allGraphs.get(patternid_min).write(os);
 
                     // update allAllGraphs
-                    Graph g = new Graph();
+                    Graph g = new Graph(directed);
                     DFS_CODE.toGraph(g);
                     allGraphs.set(patternid_min, g);
 
@@ -982,15 +952,14 @@ public class CODAProcessor<NodeType, EdgeType> {
                         allCoveredEdges.addAll(temp);
                     }
 
-
                     // update  CoveredEdges_OriginalGraphs
                     CoveredEdges_OriginalGraphs.clear();
                     for(Integer edgeid : allCoveredEdges) {
-//                        Integer gid = edgeid / 1000;
-                        Set<Integer>  temp = CoveredEdges_OriginalGraphs.get(0);
+                        Integer gid = edgeid / 1000;
+                        Set<Integer>  temp = CoveredEdges_OriginalGraphs.get(gid);
                         if(temp == null) temp = new  HashSet<Integer>();
                         temp.add(edgeid);
-                        CoveredEdges_OriginalGraphs.put(0, temp);
+                        CoveredEdges_OriginalGraphs.put(gid, temp);
                     }
 
 
@@ -1030,32 +999,403 @@ public class CODAProcessor<NodeType, EdgeType> {
     }
 
 
-
-    private Integer getBenefitScore_Initial(Projected projected) {
-        //reportwithCoveredEdges_Initial(sup, projected);
-
-//        构建当前模式的覆盖边集合 coverededges_pattern
-
-        Set<Integer> coverededges_pattern = new HashSet<Integer>();
-        for (PDFS aProjected : projected) {
-            int id = aProjected.id;
-            for (PDFS p = aProjected; p != null; p = p.prev) {
-               Integer temp = 1000 * id + p.edge.id;
-                coverededges_pattern.add(temp);
+    int DynamicSupportSetting() {
+        //// calculate minimum loss score
+        int loss_score_min =   this.minimumpattern_score;
+        List<Integer> list = new ArrayList<Integer>();
+        for (int id = 0; id < TRANS.size(); ++id) {
+            int count = 0;
+            for (int nid = 0; nid < TRANS.get(id).size(); ++nid) {
+                for(Edge e : TRANS.get(id).get(nid).edge) {
+                    Integer edgeid = id*1000 + e.id;
+                    if(this.Rcov_edge.get(edgeid)==null || this.Rcov_edge.get(edgeid).size()==0) continue;
+                    count++;
+                }
             }
+            list.add(count);
         }
-//        遍历 projected：获取每个 PDFS 对象的 id 和对应的边信息。
-//        对于每条边，计算唯一标识符 temp（通过 id * 1000 + p.edge.id 生成），并将其添加到 coverededges_pattern 集合中。
-//        结果：coverededges_pattern 包含了当前模式所覆盖的所有边的集合。
+        Collections.sort(list);
+        int sum = 0;
+        int index = list.size() -1;
+        while(sum < 2 * loss_score_min) {
+            sum += list.get(index);
+            index--;
+        }
 
-        int benefitscore = getBenefitScore(coverededges_pattern);
-        return benefitscore;
+        int ans = 1;
 
-//        调用 getBenefitScore：传入 coverededges_pattern 集合，计算该模式的收益分数。getBenefitScore 方法会计算 coverededges_pattern 中未被其他模式覆盖的边数。
-//        返回收益分数：最终返回 benefitscore，表示当前模式带来的新增边覆盖的贡献。
+        if((list.size() - 1 - index) > ans)
+            ans = list.size() - 1 - index;
+        if(ans <= (int)arg.minSup)  { ans = (int)arg.minSup; }
+        //else {  System.out.println("DSS got better ans( > minSup): "+ ans) ; }
+        //System.out.println("DSS: "+ ans + ", loss_score_min: " + loss_score_min);
+        return ans;
+    }
+
+    int DynamicSupportSetting2() {
+        //// calculate minimum loss score
+        int loss_score_min =   this.minimumpattern_score;
+        List<Integer> list = new ArrayList<Integer>();
+        for (int id = 0; id < TRANS.size(); ++id) {
+            int count = 0;
+            for (int nid = 0; nid < TRANS.get(id).size(); ++nid) {
+                for(Edge e : TRANS.get(id).get(nid).edge) {
+                    Integer edgeid = id*1000 + e.id;
+                    if(this.allCoveredEdges.contains(edgeid)) continue;
+                    count++;
+                }
+            }
+            list.add(count);
+        }
+        Collections.sort(list);
+        int sum = 0;
+        int index = list.size() -1;
+        while(sum < 2 * loss_score_min) {
+            sum += list.get(index);
+            index--;
+        }
+
+        int ans = 1;
+
+        if((list.size() - 1 - index) > ans)
+            ans = list.size() - 1 - index;
+
+        if(ans <= (int)arg.minSup)  {  ans = (int)arg.minSup;  }
+        // else {  System.out.println("DSS got better ans( > minSup): "+ ans) ; }
+
+
+        // System.out.println("DSS: "+ ans + ", arg.minSup: " + arg.minSup);
+
+        return ans;
 
 
     }
+
+    Boolean BranchAndBound2(Projected projected_g, Projected  projected_g2, Boolean hasupdated) {
+        //System.out.println("test");
+        //if(true) return false;
+        if(hasupdated) {
+            int maximum_benefit = 0;
+            Set<Integer> temp  = new HashSet<Integer>();
+            for (PDFS aProjected : projected_g2) {
+                int id = aProjected.id;
+                if(temp.contains(id)==false) {
+                    // E_i
+                    int size = this.TRANS.get(id).getEdgeSize();
+                    // Cov_i
+                    int count = 0;
+                    for(int i=0;i<size;i++) {
+                        Integer edgeid = 1000*id + i;
+                        //System.out.println("ss: " + id);
+                        //if(CoveredEdges_OriginalGraphs.get(id) != null && CoveredEdges_OriginalGraphs.get(id).contains(edgeid)) count++;
+                        if(this.allCoveredEdges.contains(edgeid)) count++;
+                    }
+                    maximum_benefit = maximum_benefit + size - count;
+
+                    // if(maximum_benefit > 2*this.minimumpattern_score) {
+                    //	   return false;
+                    //   }
+                    if(arg.swapcondition.equals("swap1")) {
+                        if(maximum_benefit > 2* minimumpattern_score ) {
+                            return false;
+                        }
+                    }else  if(arg.swapcondition.equals("swap2")) {
+                        if(maximum_benefit > minimumpattern_score  + this.allCoveredEdges.size()*1.0/arg.numberofpatterns) {
+                            return false;
+                        }
+                    }else {
+                        if(maximum_benefit > (1+arg.swapAlpha)*minimumpattern_score  + (1-arg.swapAlpha)*(this.allCoveredEdges.size()*1.0/arg.numberofpatterns)) {
+                            return false;
+                        }
+                    }
+
+                    temp.add(id);
+                }
+            }
+            //System.out.println("test11111");
+            return true;
+        }
+        else {
+            //System.out.println("test");
+            if(true) {
+                int maximum_benefit = 0;
+                Set<Integer> temp  = new HashSet<Integer>();
+                for (PDFS aProjected : projected_g2) {
+                    int id = aProjected.id;
+                    if(temp.contains(id)==false) {
+                        // E_i
+                        int size = this.TRANS.get(id).getEdgeSize();
+                        // Cov_i
+                        int count = 0;
+
+                        // if(CoveredEdges_OriginalGraphs.get(id) !=null) {
+                        //	 for(int i=0;i<size;i++) {
+                        //		  Integer edgeid = 1000*id + i;
+                        //		  if(CoveredEdges_OriginalGraphs.get(id).contains(edgeid)) count++;
+                        //	  }
+                        //  }
+                        for(int i=0;i<size;i++) {
+                            Integer edgeid = 1000*id + i;
+                            if(this.allCoveredEdges.contains(edgeid)) count++;
+                        }
+                        maximum_benefit = maximum_benefit + size - count;
+                        temp.add(id);
+                    }
+                }
+                //if(maximum_benefit <= 2*this.minimumpattern_score)  {
+                //	return true;
+                //}
+
+                if(arg.swapcondition.equals("swap1")) {
+                    if(maximum_benefit <= 2* minimumpattern_score ) {
+                        return true;
+                    }
+                }else  if(arg.swapcondition.equals("swap2")) {
+                    if(maximum_benefit <= minimumpattern_score  + this.allCoveredEdges.size()*1.0/arg.numberofpatterns) {
+                        return true;
+                    }
+                }else {
+                    if(maximum_benefit <= (1+arg.swapAlpha)*minimumpattern_score  + (1-arg.swapAlpha)*(this.allCoveredEdges.size()*1.0/arg.numberofpatterns)) {
+                        return true;
+                    }
+                }
+            }
+
+
+            int maximum_benefit = 0;
+            int totaledges = 0;
+            Set<Integer> graphIDs = new HashSet<Integer>();
+            Set<Integer> Cov_g  = new HashSet<Integer>();
+            Set<Integer> Cov_g2  = new HashSet<Integer>();
+            Set<Integer> Cov_i  = new HashSet<Integer>();
+
+            //calculate Cov_g2
+            for (PDFS aProjected : projected_g2) {
+                int id = aProjected.id;
+                for (PDFS p = aProjected; p != null; p = p.prev) {
+                    Integer temp = 1000 * id + p.edge.id;
+                    Cov_g2.add(temp);
+                }
+                graphIDs.add(id);
+            }
+
+            //calculate Cov_g
+            for (PDFS aProjected : projected_g) {
+                int id = aProjected.id;
+                if(graphIDs.contains(id) == false) continue;
+                for (PDFS p = aProjected; p != null; p = p.prev) {
+                    Integer temp = 1000 * id + p.edge.id;
+                    Cov_g.add(temp);
+                }
+            }
+
+            //calculate Cov_i
+            //for(int id: graphIDs) {
+            //	totaledges += this.TRANS.get(id).getEdgeSize();
+            //for(int e: allCoveredEdges) if(e >= 1000*id && e < 1000*(id+1)) Cov_i.add(e);
+            //	if(CoveredEdges_OriginalGraphs.get(id) == null) continue;
+            //	Cov_i.addAll(CoveredEdges_OriginalGraphs.get(id));
+            //}
+
+            for(int id: graphIDs) {
+                totaledges += this.TRANS.get(id).getEdgeSize();
+                for(int e: allCoveredEdges) if(e >= 1000*id && e < 1000*(id+1)) Cov_i.add(e);
+
+            }
+
+
+            // Cov_diff = Cov(g) \ (Cov(g2) U Cov(g))
+            Set<Integer> Cov_diff = new HashSet<Integer>();
+            for(Integer e: Cov_g) {
+                if(Cov_g2.contains(e) == false && Cov_i.contains(e) == false) {
+                    Cov_diff.add(e);
+                }
+            }
+
+            // Cov_i U Cov_diff
+            Set<Integer> Cov_union = Cov_i;
+            Cov_union.addAll(Cov_diff);
+
+            maximum_benefit =  totaledges - Cov_union.size();
+
+            //  if(maximum_benefit > 2*this.minimumpattern_score) {
+            //	   return false;
+            //  }
+
+            if(arg.swapcondition.equals("swap1")) {
+                if(maximum_benefit > 2* minimumpattern_score ) {
+                    return false;
+                }
+            }else  if(arg.swapcondition.equals("swap2")) {
+                if(maximum_benefit > minimumpattern_score  + this.allCoveredEdges.size()*1.0/arg.numberofpatterns) {
+                    return false;
+                }
+            }else {
+                if(maximum_benefit > (1+arg.swapAlpha)*minimumpattern_score  + (1-arg.swapAlpha)*(this.allCoveredEdges.size()*1.0/arg.numberofpatterns)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
+    Boolean BranchAndBound(Projected projected_g, Projected  projected_g2, Boolean hasupdated) {
+        //System.out.println("test");
+        //if(true) return false;
+        if(hasupdated) {
+            int maximum_benefit = 0;
+            Set<Integer> temp  = new HashSet<Integer>();
+            for (PDFS aProjected : projected_g2) {
+                int id = aProjected.id;
+                if(temp.contains(id)==false) {
+                    // E_i
+                    int size = this.TRANS.get(id).getEdgeSize();
+                    // Cov_i
+                    int count = 0;
+                    for(int i=0;i<size;i++) {
+                        Integer edgeid = 1000*id + i;
+                        //System.out.println("ss: " + id);
+                        if(CoveredEdges_OriginalGraphs.get(id) != null && CoveredEdges_OriginalGraphs.get(id).contains(edgeid)) count++;
+                    }
+                    maximum_benefit = maximum_benefit + size - count;
+
+                    // if(maximum_benefit > 2*this.minimumpattern_score) {
+                    //	   return false;
+                    //   }
+                    if(arg.swapcondition.equals("swap1")) {
+                        if(maximum_benefit > 2* minimumpattern_score ) {
+                            return false;
+                        }
+                    }else  if(arg.swapcondition.equals("swap2")) {
+                        if(maximum_benefit > minimumpattern_score  + this.allCoveredEdges.size()*1.0/arg.numberofpatterns) {
+                            return false;
+                        }
+                    }else {
+                        if(maximum_benefit > (1+arg.swapAlpha)*minimumpattern_score  + (1-arg.swapAlpha)*(this.allCoveredEdges.size()*1.0/arg.numberofpatterns)) {
+                            return false;
+                        }
+                    }
+
+                    temp.add(id);
+                }
+            }
+            //System.out.println("test11111");
+            return true;
+        }
+        else {
+            //System.out.println("test");
+            if(true) {
+                int maximum_benefit = 0;
+                Set<Integer> temp  = new HashSet<Integer>();
+                for (PDFS aProjected : projected_g2) {
+                    int id = aProjected.id;
+                    if(temp.contains(id)==false) {
+                        // E_i
+                        int size = this.TRANS.get(id).getEdgeSize();
+                        // Cov_i
+                        int count = 0;
+                        if(CoveredEdges_OriginalGraphs.get(id) !=null) {
+                            for(int i=0;i<size;i++) {
+                                Integer edgeid = 1000*id + i;
+                                if(CoveredEdges_OriginalGraphs.get(id).contains(edgeid)) count++;
+                            }
+                        }
+                        maximum_benefit = maximum_benefit + size - count;
+                        temp.add(id);
+                    }
+                }
+                //if(maximum_benefit <= 2*this.minimumpattern_score)  {
+                //	return true;
+                //}
+
+                if(arg.swapcondition.equals("swap1")) {
+                    if(maximum_benefit <= 2* minimumpattern_score ) {
+                        return true;
+                    }
+                }else  if(arg.swapcondition.equals("swap2")) {
+                    if(maximum_benefit <= minimumpattern_score  + this.allCoveredEdges.size()*1.0/arg.numberofpatterns) {
+                        return true;
+                    }
+                }else {
+                    if(maximum_benefit <= (1+arg.swapAlpha)*minimumpattern_score  + (1-arg.swapAlpha)*(this.allCoveredEdges.size()*1.0/arg.numberofpatterns)) {
+                        return true;
+                    }
+                }
+            }
+
+
+            int maximum_benefit = 0;
+            int totaledges = 0;
+            Set<Integer> graphIDs = new HashSet<Integer>();
+            Set<Integer> Cov_g  = new HashSet<Integer>();
+            Set<Integer> Cov_g2  = new HashSet<Integer>();
+            Set<Integer> Cov_i  = new HashSet<Integer>();
+
+            //calculate Cov_g2
+            for (PDFS aProjected : projected_g2) {
+                int id = aProjected.id;
+                for (PDFS p = aProjected; p != null; p = p.prev) {
+                    Integer temp = 1000 * id + p.edge.id;
+                    Cov_g2.add(temp);
+                }
+                graphIDs.add(id);
+            }
+
+            //calculate Cov_g
+            for (PDFS aProjected : projected_g) {
+                int id = aProjected.id;
+                if(graphIDs.contains(id) == false) continue;
+                for (PDFS p = aProjected; p != null; p = p.prev) {
+                    Integer temp = 1000 * id + p.edge.id;
+                    Cov_g.add(temp);
+                }
+            }
+
+            //calculate Cov_i
+            for(int id: graphIDs) {
+                totaledges += this.TRANS.get(id).getEdgeSize();
+                //for(int e: allCoveredEdges) if(e >= 1000*id && e < 1000*(id+1)) Cov_i.add(e);
+                if(CoveredEdges_OriginalGraphs.get(id) == null) continue;
+                Cov_i.addAll(CoveredEdges_OriginalGraphs.get(id));
+            }
+
+            // Cov_diff = Cov(g) \ (Cov(g2) U Cov(g))
+            Set<Integer> Cov_diff = new HashSet<Integer>();
+            for(Integer e: Cov_g) {
+                if(Cov_g2.contains(e) == false && Cov_i.contains(e) == false) {
+                    Cov_diff.add(e);
+                }
+            }
+
+            // Cov_i U Cov_diff
+            Set<Integer> Cov_union = Cov_i;
+            Cov_union.addAll(Cov_diff);
+
+            maximum_benefit =  totaledges - Cov_union.size();
+
+            //  if(maximum_benefit > 2*this.minimumpattern_score) {
+            //	   return false;
+            //  }
+
+            if(arg.swapcondition.equals("swap1")) {
+                if(maximum_benefit > 2* minimumpattern_score ) {
+                    return false;
+                }
+            }else  if(arg.swapcondition.equals("swap2")) {
+                if(maximum_benefit > minimumpattern_score  + this.allCoveredEdges.size()*1.0/arg.numberofpatterns) {
+                    return false;
+                }
+            }else {
+                if(maximum_benefit > (1+arg.swapAlpha)*minimumpattern_score  + (1-arg.swapAlpha)*(this.allCoveredEdges.size()*1.0/arg.numberofpatterns)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
     private void project(Projected projected) throws IOException {
         //Recursive sub-graph mining function (similar to sub-procedure 1 Sub-graph_Mining in [Yan2002]).
         //Check if the pattern is frequent enough.
@@ -1087,10 +1427,8 @@ public class CODAProcessor<NodeType, EdgeType> {
          * might be its (n+1)-extension-graphs, hence we enumerate them all.
          */
         ArrayList<Integer> rmPath = DFS_CODE.buildRMPath();
-        DFS minDFS = (DFS)DFS_CODE.getDFSList().get(0);
-        int minLabel = minDFS.fromLabel;
-        DFS maxDFS = (DFS)DFS_CODE.getDFSList().get(rmPath.get(0));
-        int maxToc = maxDFS.to;
+        int minLabel = DFS_CODE.get(0).fromLabel;
+        int maxToc = DFS_CODE.get(rmPath.get(0)).to;
 
 
         //note:  1. new_bck_root[to_vertex][eLabel] =  Projected, since from_vertex is fixed as maxToc and labels of two end nodes are known.
@@ -1106,7 +1444,7 @@ public class CODAProcessor<NodeType, EdgeType> {
         for (PDFS aProjected : projected) {
 
             int id = aProjected.id;
-            History history = new History(TRANS, aProjected);
+            History history = new History(TRANS.get(id), aProjected);
 
             // XXX: do we have to change something here for directed edges?
 
@@ -1116,10 +1454,9 @@ public class CODAProcessor<NodeType, EdgeType> {
 
                 //note: e1 = history.get(rmPath.get(i)),  e2 = history.get(rmPath.get(0)), check if there is an edge between e2.to and e1.from, and this edge is not already in history
                 //           if yes, choose this edge as a backward edge
-                Edge e = Misc.getBackward(TRANS, history.get(rmPath.get(i)), history.get(rmPath.get(0)),history);
+                Edge e = Misc.getBackward(TRANS.get(id), history.get(rmPath.get(i)), history.get(rmPath.get(0)),history);
                 if (e != null) {
-                    DFS key1 = (DFS)DFS_CODE.getDFSList().get(rmPath.get(i));
-                    int key_1 = key1.from;
+                    int key_1 = DFS_CODE.get(rmPath.get(i)).from;
                     NavigableMap<Integer, Projected> root_1 = new_bck_root.computeIfAbsent(key_1, k -> new TreeMap<>());
                     int key_2 = e.eLabel;
                     Projected root_2 = root_1.get(key_2);
@@ -1138,12 +1475,12 @@ public class CODAProcessor<NodeType, EdgeType> {
             //
             // The problem is:
             // history[rmPath[0]].to > TRANS[id].size()
-            if (Misc.getForwardPure(TRANS, history.get(rmPath.get(0)), minLabel, history, edges))
+            if (Misc.getForwardPure(TRANS.get(id), history.get(rmPath.get(0)), minLabel, history, edges))
                 for (Edge it : edges) {
                     NavigableMap<Integer, NavigableMap<Integer, Projected>> root_1 = new_fwd_root.computeIfAbsent(maxToc, k -> new TreeMap<>());
                     int key_2 = it.eLabel;
                     NavigableMap<Integer, Projected> root_2 = root_1.computeIfAbsent(key_2, k -> new TreeMap<>());
-                    int key_3 = TRANS.get(it.to).label;
+                    int key_3 = TRANS.get(id).get(it.to).label;
                     Projected root_3 = root_2.get(key_3);
                     if (root_3 == null) {
                         root_3 = new Projected();
@@ -1153,14 +1490,13 @@ public class CODAProcessor<NodeType, EdgeType> {
                 }
             // backtracked forward
             for (Integer aRmPath : rmPath)
-                if (Misc.getForwardRmPath(TRANS, history.get(aRmPath), minLabel, history, edges))
+                if (Misc.getForwardRmPath(TRANS.get(id), history.get(aRmPath), minLabel, history, edges))
                     for (Edge it : edges) {
-                        DFS key1 = (DFS)DFS_CODE.getDFSList().get(aRmPath);
-                        int key_1 = key1.from;
+                        int key_1 = DFS_CODE.get(aRmPath).from;
                         NavigableMap<Integer, NavigableMap<Integer, Projected>> root_1 = new_fwd_root.computeIfAbsent(key_1, k -> new TreeMap<>());
                         int key_2 = it.eLabel;
                         NavigableMap<Integer, Projected> root_2 = root_1.computeIfAbsent(key_2, k -> new TreeMap<>());
-                        int key_3 = TRANS.get(it.to).label;
+                        int key_3 = TRANS.get(id).get(it.to).label;
                         Projected root_3 = root_2.get(key_3);
                         if (root_3 == null) {
                             root_3 = new Projected();
@@ -1206,9 +1542,19 @@ public class CODAProcessor<NodeType, EdgeType> {
         }
     }
 
-
-
-
+    private Integer getBenefitScore_Initial(Projected projected) {
+        //reportwithCoveredEdges_Initial(sup, projected);
+        Set<Integer> coverededges_pattern = new HashSet<Integer>();
+        for (PDFS aProjected : projected) {
+            int id = aProjected.id;
+            for (PDFS p = aProjected; p != null; p = p.prev) {
+                Integer temp = 1000 * id + p.edge.id;
+                coverededges_pattern.add(temp);
+            }
+        }
+        int benefitscore = getBenefitScore(coverededges_pattern);
+        return benefitscore;
+    }
 
     private void project_Initial(Projected projected) throws IOException {
         //int sup = support(projected);
@@ -1223,45 +1569,28 @@ public class CODAProcessor<NodeType, EdgeType> {
         //}
 
         //reportwithCoveredEdges_Initial(sup, projected);
-
-//        计算当前模式的收益分数
         int CurrentBenefitScore = getBenefitScore_Initial(projected);
 
         if(arg.maxNodeNum <= 2) return;
+
         if (arg.maxNodeNum > arg.minNodeNum && DFS_CODE.countNode() > arg.maxNodeNum)  return;
-//        收益分数：调用 getBenefitScore_Initial 方法，计算当前模式的覆盖收益分数 CurrentBenefitScore。
-//        模式大小限制：如果 maxNodeNum <= 2，则不进行扩展。如果当前模式节点数超过 maxNodeNum，也会提前返回。
-
-
         ArrayList<Integer> rmPath = DFS_CODE.buildRMPath();
-        DFS minDFS = (DFS) DFS_CODE.getDFSList().get(0);
-        int minLabel = minDFS.fromLabel;
-
-        DFS maxDFS = (DFS) DFS_CODE.getDFSList().get(rmPath.get(0));
-        int maxToc = maxDFS.to;
+        int minLabel = DFS_CODE.get(0).fromLabel;
+        int maxToc = DFS_CODE.get(rmPath.get(0)).to;
         NavigableMap<Integer, NavigableMap<Integer, NavigableMap<Integer, Projected>>> new_fwd_root = new TreeMap<>();
         NavigableMap<Integer, NavigableMap<Integer, Projected>> new_bck_root = new TreeMap<>();
         ArrayList<Edge> edges = new ArrayList<>();
-
-//        构建右侧路径和初始化扩展结构
-//              rmPath：生成当前模式的右侧路径，用于定义可能的扩展。
-//              new_fwd_root 和 new_bck_root：用于存储前向扩展和后向扩展的投影信息。
-//              edges：用于临时存储每次扩展产生的边集合。
-
         // Enumerate all possible one edge extensions of the current substructure.
-//        遍历 projected 中的投影，生成前向和后向扩展
         for (PDFS aProjected : projected) {
             int id = aProjected.id;
-            History history = new History(TRANS, aProjected);
+            History history = new History(TRANS.get(id), aProjected);
             // backward
             for (int i = rmPath.size() - 1; i >= 1; --i) {
                 //note: e1 = history.get(rmPath.get(i)),  e2 = history.get(rmPath.get(0)), check if there is an edge between e2.to and e1.from, and this edge is not already in history
                 //           if yes, choose this edge as a backward edge
-                Edge e = main.Misc.getBackward(TRANS,history.get(rmPath.get(i)), history.get(rmPath.get(0)),history);
+                Edge e = Misc.getBackward(TRANS.get(id), history.get(rmPath.get(i)), history.get(rmPath.get(0)),history);
                 if (e != null) {
-                    DFS key1 = (DFS)DFS_CODE.getDFSList().get(i);
-                    int key_1 = key1.from;
-
+                    int key_1 = DFS_CODE.get(rmPath.get(i)).from;
                     NavigableMap<Integer, Projected> root_1 = new_bck_root.computeIfAbsent(key_1, k -> new TreeMap<>());
                     int key_2 = e.eLabel;
                     Projected root_2 = root_1.get(key_2);
@@ -1279,12 +1608,12 @@ public class CODAProcessor<NodeType, EdgeType> {
             //
             // The problem is:
             // history[rmPath[0]].to > TRANS[id].size()
-            if (main.Misc.getForwardPure(TRANS, history.get(rmPath.get(0)), minLabel, history, edges))
+            if (Misc.getForwardPure(TRANS.get(id), history.get(rmPath.get(0)), minLabel, history, edges))
                 for (Edge it : edges) {
                     NavigableMap<Integer, NavigableMap<Integer, Projected>> root_1 = new_fwd_root.computeIfAbsent(maxToc, k -> new TreeMap<>());
                     int key_2 = it.eLabel;
                     NavigableMap<Integer, Projected> root_2 = root_1.computeIfAbsent(key_2, k -> new TreeMap<>());
-                    int key_3 = TRANS.get(it.to).label;
+                    int key_3 = TRANS.get(id).get(it.to).label;
                     Projected root_3 = root_2.get(key_3);
                     if (root_3 == null) {
                         root_3 = new Projected();
@@ -1294,16 +1623,13 @@ public class CODAProcessor<NodeType, EdgeType> {
                 }
             // backtracked forward
             for (Integer aRmPath : rmPath)
-                if (main.Misc.getForwardRmPath(TRANS, history.get(aRmPath), minLabel, history, edges))
+                if (Misc.getForwardRmPath(TRANS.get(id), history.get(aRmPath), minLabel, history, edges))
                     for (Edge it : edges) {
-
-                        DFS key1 = (DFS)DFS_CODE.getDFSList().get(aRmPath);
-                        int key_1 = key1.from;
-
+                        int key_1 = DFS_CODE.get(aRmPath).from;
                         NavigableMap<Integer, NavigableMap<Integer, Projected>> root_1 = new_fwd_root.computeIfAbsent(key_1, k -> new TreeMap<>());
                         int key_2 = it.eLabel;
                         NavigableMap<Integer, Projected> root_2 = root_1.computeIfAbsent(key_2, k -> new TreeMap<>());
-                        int key_3 = TRANS.get(it.to).label;
+                        int key_3 = TRANS.get(id).get(it.to).label;
                         Projected root_3 = root_2.get(key_3);
                         if (root_3 == null) {
                             root_3 = new Projected();
@@ -1313,12 +1639,6 @@ public class CODAProcessor<NodeType, EdgeType> {
                     }
         }
 
-//        后向扩展：对于右侧路径中的每个节点，使用 Misc.getBackward 方法找到合适的后向边。
-//        前向扩展：调用 Misc.getForwardPure 方法获取右侧路径的扩展边，并存储到 new_fwd_root 中。
-//        回溯前向扩展：调用 Misc.getForwardRmPath 获取可与右侧路径任意节点连接的前向边，生成新的投影。
-
-
-//        计算每个扩展的收益分数并选择最佳扩展
         int Benefitscore_max_backward = -1;
         Integer maxToc_max_backward = 0;
         Integer index1_max_backward = 0;
@@ -1377,8 +1697,6 @@ public class CODAProcessor<NodeType, EdgeType> {
         }
         //System.out.println("CurrentBenefitScore, Benefitscore_max_forward, Benefitscore_max_backward: "+ CurrentBenefitScore + "," + Benefitscore_max_forward + "," + Benefitscore_max_backward);
 
-
-//        比较当前模式与最佳扩展模式的收益，决定是否扩展或报告
         if(Benefitscore_max_forward >= CurrentBenefitScore && Benefitscore_max_forward>= Benefitscore_max_backward) {
             //System.out.println("here1");
             DFS_CODE.push(from_max_forward, maxToc_max_forward, -1, index1_max_forward, eLabel_max_forward);
@@ -1395,11 +1713,8 @@ public class CODAProcessor<NodeType, EdgeType> {
             reportwithCoveredEdges_Initial(0, projected);
             return ;
         }
-//        扩展策略：如果最佳的前向或后向扩展的收益分数高于当前模式的 CurrentBenefitScore，则将对应扩展推入 DFS_CODE，并递归调用 project_Initial 进行进一步扩展。
-//        报告模式：如果没有扩展的收益分数高于当前模式，则调用 reportwithCoveredEdges_Initial 方法记录当前模式。
-
-
     }
+
     private int support(Projected projected) {
         int oid = 0xffffffff;
         int size = 0;
@@ -1413,13 +1728,13 @@ public class CODAProcessor<NodeType, EdgeType> {
 
         return size;
     }
-    private boolean isMin() {
 
-        if (DFS_CODE.getDFSList().size() == 1)
+    private boolean isMin() {
+        if (DFS_CODE.size() == 1)
             return (true);
 
         DFS_CODE.toGraph(GRAPH_IS_MIN);
-        DFS_CODE_IS_MIN.getDFSList().clear();
+        DFS_CODE_IS_MIN.clear();
 
         // note: [vertex1.label][eLabel][vertex2.label] = Projected
         NavigableMap<Integer, NavigableMap<Integer, NavigableMap<Integer, Projected>>> root = new TreeMap<>();
@@ -1457,12 +1772,10 @@ public class CODAProcessor<NodeType, EdgeType> {
         ArrayList<Integer> rmPath = DFS_CODE_IS_MIN.buildRMPath();
 
         //note: fromlabel of first DFS in  DFS_CODE_IS_MIN
-        DFS minDFS = (DFS)DFS_CODE_IS_MIN.getDFSList().get(0);
-        int minLabel = minDFS.fromLabel;
+        int minLabel = DFS_CODE_IS_MIN.get(0).fromLabel;
 
         //note: rightmost vertex in  DFS_CODE_IS_MIN
-        DFS maxDFS = (DFS)DFS_CODE_IS_MIN.getDFSList().get(rmPath.get(0));
-        int maxToc = maxDFS.to;
+        int maxToc = DFS_CODE_IS_MIN.get(rmPath.get(0)).to;
 
         {
             NavigableMap<Integer, Projected> root = new TreeMap<>();
@@ -1482,8 +1795,7 @@ public class CODAProcessor<NodeType, EdgeType> {
                             root.put(key_1, root_1);
                         }
                         root_1.push(0, e, cur);
-                        DFS newTo_DFS = (DFS)DFS_CODE_IS_MIN.getDFSList().get(rmPath.get(i));
-                        newTo = newTo_DFS.from;
+                        newTo = DFS_CODE_IS_MIN.get(rmPath.get(i)).from;
                         flg = true;
                     }
                 }
@@ -1491,11 +1803,9 @@ public class CODAProcessor<NodeType, EdgeType> {
 
             if (flg) {
                 Entry<Integer, Projected> eLabel = root.firstEntry();
-//                Change here
                 DFS_CODE_IS_MIN.push(maxToc, newTo, -1, eLabel.getKey(), -1);
-                DFS GenCode = (DFS)DFS_CODE.getDFSList().get(DFS_CODE_IS_MIN.getDFSList().size() - 1);
-                DFS CurrentCode = (DFS)DFS_CODE_IS_MIN.getDFSList().get(DFS_CODE_IS_MIN.getDFSList().size() - 1);
-                if (GenCode.notEqual(CurrentCode))
+                if (DFS_CODE.get(DFS_CODE_IS_MIN.size() - 1)
+                        .notEqual(DFS_CODE_IS_MIN.get(DFS_CODE_IS_MIN.size() - 1)))
                     return false;
                 return isMinProject(eLabel.getValue());
             }
@@ -1531,8 +1841,7 @@ public class CODAProcessor<NodeType, EdgeType> {
                     History history = new History(GRAPH_IS_MIN, cur);
                     if (Misc.getForwardRmPath(GRAPH_IS_MIN, history.get(rmPath.get(i)), minLabel, history, edges)) {
                         flg = true;
-                        DFS newFrom_DFS = (DFS)DFS_CODE_IS_MIN.getDFSList().get(rmPath.get(i));
-                        newFrom = newFrom_DFS.from;
+                        newFrom = DFS_CODE_IS_MIN.get(rmPath.get(i)).from;
                         for (Edge it : edges) {
                             int key_1 = it.eLabel;
                             NavigableMap<Integer, Projected> root_1 = root.computeIfAbsent(key_1, k -> new TreeMap<>());
@@ -1552,11 +1861,8 @@ public class CODAProcessor<NodeType, EdgeType> {
                 Entry<Integer, NavigableMap<Integer, Projected>> eLabel = root.firstEntry();
                 Entry<Integer, Projected> toLabel = eLabel.getValue().firstEntry();
                 DFS_CODE_IS_MIN.push(newFrom, maxToc + 1, -1, eLabel.getKey(), toLabel.getKey());
-
-                DFS GenCode = (DFS)DFS_CODE.getDFSList().get(DFS_CODE_IS_MIN.getDFSList().size() - 1);
-                DFS CurrentCode = (DFS)DFS_CODE_IS_MIN.getDFSList().get(DFS_CODE_IS_MIN.getDFSList().size() - 1);
-
-                if (GenCode.notEqual(CurrentCode))
+                if (DFS_CODE.get(DFS_CODE_IS_MIN.size() - 1)
+                        .notEqual(DFS_CODE_IS_MIN.get(DFS_CODE_IS_MIN.size() - 1)))
                     return false;
                 return isMinProject(toLabel.getValue());
             }
@@ -1564,219 +1870,4 @@ public class CODAProcessor<NodeType, EdgeType> {
 
         return true;
     }
-
-    int DynamicSupportSetting() {
-        //// calculate minimum loss score
-        int loss_score_min =   this.minimumpattern_score;
-        List<Integer> list = new ArrayList<Integer>();
-
-//      loss_score_min：将 minimumpattern_score 的值赋予 loss_score_min，作为后续计算的基准。
-//		list：初始化一个整数列表，用于存储每个图中满足条件的边数量。
-
-            int id = 0;
-            int count = 0;
-            for (int nid = 0; nid < TRANS.size(); ++nid) {
-                for(Edge e : TRANS.get(nid).edge) {
-                    Integer edgeid = e.id;
-                    if(this.Rcov_edge.get(edgeid)==null || this.Rcov_edge.get(edgeid).size()==0) continue;
-                    count++;
-                }
-            }
-            list.add(count);
-
-
-//        外层循环：遍历 TRANS 中的每个图。
-//		count 变量：用于统计当前图中满足条件的边数量。
-//		判断条件：对于每条边 e，检查 Rcov_edge 中是否存在边 edgeid 的信息。如果 Rcov_edge.get(edgeid) 为空，说明该边没有被任何模式覆盖，跳过计数；否则，增加 count。
-//		将计数结果添加到 list：完成当前图的边统计后，将 count 添加到 list。
-
-
-        Collections.sort(list);
-        int sum = 0;
-        int index = list.size() -1;
-        while(sum < 2 * loss_score_min) {
-            sum += list.get(index);
-            index--;
-        }
-//     排序并计算累积和，以动态确定支持度:
-//        排序：将 list 按照边数量从小到大排序。
-//		累积和：从 list 的最大值开始向前累加，直到累积和 sum 大于或等于 2 * loss_score_min。这种方式确保选取的是满足一定覆盖率的最大边集合。
-
-
-        int ans = 1;
-
-        if((list.size() - 1 - index) > ans)
-            ans = list.size() - 1 - index;
-        if(ans <= (int)arg.minSup)  { ans = (int)arg.minSup; }
-        //else {  System.out.println("DSS got better ans( > minSup): "+ ans) ; }
-        //System.out.println("DSS: "+ ans + ", loss_score_min: " + loss_score_min);
-        return ans;
-    }
-
-//    根据累积和结果动态设置 minSup:
-//      ans：默认设置为 1，用于存储动态支持度。
-//		更新 ans：如果 (list.size() - 1 - index) 的值大于 ans，则更新 ans，确保覆盖更多边的图数量。
-//		确保支持度下限：如果 ans 小于 arg.minSup，则将 ans 设为 minSup，防止动态调整后的支持度低于初始支持度。
-//		返回结果：最终返回 ans 作为动态调整后的最小支持度。
-
-    Boolean BranchAndBound(Projected projected_g, Projected  projected_g2, Boolean hasupdated) {
-        //System.out.println("test");
-        //if(true) return false;
-        if(hasupdated) {
-            int maximum_benefit = 0;
-            Set<Integer> temp  = new HashSet<Integer>();
-            for (PDFS aProjected : projected_g2) {
-                int id = aProjected.id;
-                if(temp.contains(id)==false) {
-                    // E_i
-                    int size = this.TRANS.getEdgeSize();
-                    // Cov_i
-                    int count = 0;
-                    for(int i=0;i<size;i++) {
-                        Integer edgeid = 1000*id + i;
-                        //System.out.println("ss: " + id);
-                       if(CoveredEdges_OriginalGraphs.get(id) != null && CoveredEdges_OriginalGraphs.get(id).contains(edgeid)) count++;
-                    }
-                    maximum_benefit = maximum_benefit + size - count;
-
-                    // if(maximum_benefit > 2*this.minimumpattern_score) {
-                    //	   return false;
-                    //   }
-                    if(arg.swapcondition.equals("swap1")) {
-                        if(maximum_benefit > 2* minimumpattern_score ) {
-                            return false;
-                        }
-                    }else  if(arg.swapcondition.equals("swap2")) {
-                        if(maximum_benefit > minimumpattern_score  + this.allCoveredEdges.size()*1.0/arg.numberofpatterns) {
-                            return false;
-                        }
-                    }else {
-                        if(maximum_benefit > (1+arg.swapAlpha)*minimumpattern_score  + (1-arg.swapAlpha)*(this.allCoveredEdges.size()*1.0/arg.numberofpatterns)) {
-                            return false;
-                        }
-                    }
-
-                    temp.add(id);
-                }
-            }
-            //System.out.println("test11111");
-            return true;
-        }
-        else {
-            //System.out.println("test");
-            if(true) {
-                int maximum_benefit = 0;
-                Set<Integer> temp  = new HashSet<Integer>();
-                for (PDFS aProjected : projected_g2) {
-                    int id = aProjected.id;
-                    if(temp.contains(id)==false) {
-                        // E_i
-                        int size = this.TRANS.getEdgeSize();
-                        // Cov_i
-                        int count = 0;
-                        if(CoveredEdges_OriginalGraphs.get(id) !=null) {
-                            for(int i=0;i<size;i++) {
-                                Integer edgeid = 1000*id + i;
-                                if(CoveredEdges_OriginalGraphs.get(id).contains(edgeid)) count++;
-                            }
-                        }
-                        maximum_benefit = maximum_benefit + size - count;
-                        temp.add(id);
-                    }
-                }
-                //if(maximum_benefit <= 2*this.minimumpattern_score)  {
-                //	return true;
-                //}
-
-                if(arg.swapcondition.equals("swap1")) {
-                    if(maximum_benefit <= 2* minimumpattern_score ) {
-                        return true;
-                    }
-                }else  if(arg.swapcondition.equals("swap2")) {
-                    if(maximum_benefit <= minimumpattern_score  + this.allCoveredEdges.size()*1.0/arg.numberofpatterns) {
-                        return true;
-                    }
-                }else {
-                    if(maximum_benefit <= (1+arg.swapAlpha)*minimumpattern_score  + (1-arg.swapAlpha)*(this.allCoveredEdges.size()*1.0/arg.numberofpatterns)) {
-                        return true;
-                    }
-                }
-            }
-
-
-            int maximum_benefit = 0;
-            int totaledges = 0;
-//            Set<Integer> graphIDs = new HashSet<Integer>();
-            Set<Integer> Cov_g  = new HashSet<Integer>();
-            Set<Integer> Cov_g2  = new HashSet<Integer>();
-            Set<Integer> Cov_i  = new HashSet<Integer>();
-
-            //calculate Cov_g2
-            for (PDFS aProjected : projected_g2) {
-                int id = aProjected.id;
-                for (PDFS p = aProjected; p != null; p = p.prev) {
-                    Integer temp = 1000 * id + p.edge.id;
-                    Cov_g2.add(temp);
-                }
-//                graphIDs.add(id);
-            }
-
-            //calculate Cov_g
-            for (PDFS aProjected : projected_g) {
-                int id = aProjected.id;
-//                if(graphIDs.contains(id) == false) continue;
-                for (PDFS p = aProjected; p != null; p = p.prev) {
-                    Integer temp = 1000 * id + p.edge.id;
-                    Cov_g.add(temp);
-                }
-            }
-
-            //calculate Cov_i
-                int id = 0;
-                totaledges += this.TRANS.getEdgeSize();
-                //for(int e: allCoveredEdges) if(e >= 1000*id && e < 1000*(id+1)) Cov_i.add(e);
-//                if(CoveredEdges_OriginalGraphs.get(id) == null) continue;
-                Cov_i.addAll(CoveredEdges_OriginalGraphs.get(id));
-
-
-            // Cov_diff = Cov(g) \ (Cov(g2) U Cov(g))
-            Set<Integer> Cov_diff = new HashSet<Integer>();
-            for(Integer e: Cov_g) {
-                if(Cov_g2.contains(e) == false && Cov_i.contains(e) == false) {
-                    Cov_diff.add(e);
-                }
-            }
-
-            // Cov_i U Cov_diff
-            Set<Integer> Cov_union = Cov_i;
-            Cov_union.addAll(Cov_diff);
-
-            maximum_benefit =  totaledges - Cov_union.size();
-
-            //  if(maximum_benefit > 2*this.minimumpattern_score) {
-            //	   return false;
-            //  }
-
-            if(arg.swapcondition.equals("swap1")) {
-                if(maximum_benefit > 2* minimumpattern_score ) {
-                    return false;
-                }
-            }else  if(arg.swapcondition.equals("swap2")) {
-                if(maximum_benefit > minimumpattern_score  + this.allCoveredEdges.size()*1.0/arg.numberofpatterns) {
-                    return false;
-                }
-            }else {
-                if(maximum_benefit > (1+arg.swapAlpha)*minimumpattern_score  + (1-arg.swapAlpha)*(this.allCoveredEdges.size()*1.0/arg.numberofpatterns)) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-    }
-
-
-
-
-
 }

@@ -124,7 +124,7 @@ public class Algorithm<NodeType, EdgeType> implements
 
 	private boolean keep;
 
-//	private transient/* final */Map<GSpanEdge<NodeType, EdgeType>, DFSCode<NodeType, EdgeType>> initials;
+//	private transient/* final */Map<GSpanEdge<NodeType, EdgeType>, SimpleDFSCode<NodeType, EdgeType>> initials;
 	private HashMap<String, Integer> oneEdgePatterns;
 
 	/**
@@ -134,7 +134,7 @@ public class Algorithm<NodeType, EdgeType> implements
 		
 	}
 	
-//	public void setInitials(Map<GSpanEdge<NodeType, EdgeType>, DFSCode<NodeType, EdgeType>> initials)
+//	public void setInitials(Map<GSpanEdge<NodeType, EdgeType>, SimpleDFSCode<NodeType, EdgeType>> initials)
 //	{
 //		this.initials=initials;
 //	}

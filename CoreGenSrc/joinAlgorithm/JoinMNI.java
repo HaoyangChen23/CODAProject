@@ -43,7 +43,7 @@ public class JoinMNI<NodeType, EdgeType> {
 		this.esMap = new HashMap<Integer, PatternEdges>();
 		this.domainMap = new HashMap<Integer, HashSet<Integer>>();
 		this.hasTraverseNodes = new HashSet<>();
-		this.pDFSCode = (DFSCode<NodeType, EdgeType>) code;// P: DFSCode format
+		this.pDFSCode = (DFSCode<NodeType, EdgeType>) code;// P: SimpleDFSCode format
 		this.superNodeMap = code.getSuperNodes();
 		this.UB = code.getMNIub();
 		this.fullEdgeMap = code.getFullEdgeMap();

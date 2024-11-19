@@ -23,14 +23,14 @@ public class Arguments {
       public String strategy  = "topk";
        // String strategy  = "greedy";
        public Integer numberofpatterns = 5;
-      Integer numberofgraphs   = 40000;
+      public Integer numberofgraphs   = 1;
       
       public Boolean hasPRM = true;
       public Boolean isPESIndex  = true;
       public Boolean isSimpleIndex = !isPESIndex;
       
       
-      public Boolean hasDSS = true;
+      public Boolean hasDSS = false;
       public Boolean hasInitialPatternGenerator  = true;
       
      // double maintainTime = 0;

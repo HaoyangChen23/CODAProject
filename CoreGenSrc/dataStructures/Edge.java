@@ -26,7 +26,7 @@ package dataStructures;
  *            the type of the edge labels (will be hashed and checked with
  *            .equals(..))
  */
-public class Edge<NodeType, EdgeType> {
+public interface Edge<NodeType, EdgeType> {
 
 	/** constant that tells that the edge goes from nodeB to nodeA */
 	public static final int INCOMING = -1;
@@ -37,14 +37,52 @@ public class Edge<NodeType, EdgeType> {
 	/** constant that tells that the edge goes from nodeA to nodeB */
 	public static final int OUTGOING = 1;
 
-	public int from = 0;
+	/**
+	 * @return the direction that told, if the edge is UNDIRECTED, OUTGOING or
+	 *         INCOMING in respect to the first node
+	 */
+	public int getDirection();
 
-	public int to = 0;
+	/**
+	 * @param node
+	 * @return the direction that told, if the edge is UNDIRECTED, OUTGOING or
+	 *         INCOMING in respect to the given node
+	 */
+	public int getDirection(Node<NodeType, EdgeType> node);
 
-	public int eLabel = 0;
+	
 
-	public int id = 0;
+	/**
+	 * @return the edge index of this edge in the corresponding graph
+	 */
+	public int getIndex();
 
+	/**
+	 * @return the connected label
+	 */
+	public EdgeType getLabel();
 
+	/**
+	 * @return the first node of the edge
+	 */
+	public Node<NodeType, EdgeType> getNodeA();
+
+	/**
+	 * @return the second node of the edge
+	 */
+	public Node<NodeType, EdgeType> getNodeB();
+
+	/**
+	 * @param node
+	 * @return the other node of the edge
+	 */
+	public Node<NodeType, EdgeType> getOtherNode(Node<NodeType, EdgeType> node);
+
+	/**
+	 * set the label of this edge
+	 * 
+	 * @param label
+	 */
+	public void setLabel(EdgeType label);
 
 }

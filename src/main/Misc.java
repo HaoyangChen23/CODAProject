@@ -2,10 +2,10 @@ package main;
 
 import java.util.ArrayList;
 
-import dataStructures.Edge;
-import dataStructures.Graph;
-import dataStructures.History;
-import dataStructures.Vertex;
+import model.Edge;
+import model.Graph;
+import model.History;
+import model.Vertex;
 
 public class Misc {
     public static boolean getForwardRoot(Graph g, Vertex v, ArrayList<Edge> result) {

@@ -45,7 +45,7 @@ public class UpperBoundOfMNI <NodeType, EdgeType>{
 	
 	public UpperBoundOfMNI(Query qry, DFSCode<NodeType, EdgeType> pDFSCode) {
 		this.qry = qry;// candidate pattern P: graph format
-		this.pDFSCode = (DFSCode<NodeType, EdgeType>) pDFSCode;// P: DFSCode format
+		this.pDFSCode = (DFSCode<NodeType, EdgeType>) pDFSCode;// P: SimpleDFSCode format
 	}
 
 	public UpperBoundOfMNI(Graph singleGraph, HashMap<String, Integer> patternEdgeMap) {

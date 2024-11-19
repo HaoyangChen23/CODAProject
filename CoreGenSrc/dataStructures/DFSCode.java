@@ -25,13 +25,15 @@ import CSP.DFSSearch;
 import CSP.Variable;
 import decomposer.Decomposer;
 import joinAlgorithm.JoinMNI;
+import model.SimpleDFSCode;
 import search.SearchLatticeNode;
 import utilities.DfscodesCache;
 import utilities.Settings;
+import model.DFS; // Import TED's DFS class
 
 
 /**
- * Implements the DFSCode that represents a subgraph during the
+ * Implements the SimpleDFSCode that represents a subgraph during the
  * search.
  * <p>
  * It can/will be stored in local object pool to avoid object generation/garbage
@@ -49,26 +51,12 @@ import utilities.Settings;
 public class DFSCode<NodeType, EdgeType> extends
 		SearchLatticeNode<NodeType, EdgeType> implements
 		Comparable<DFSCode<NodeType, EdgeType>>, Generic<NodeType, EdgeType>,
-		Canonizable, Frequented{
-
-	public void setDFSList(ArrayList<DFS> DFSList) {
-		this.DFSList = DFSList;
-	}
-
-	public ArrayList<DFS> getDFSList() {
-		return DFSList;
-	}
+		Canonizable, Frequented {
 
 	/**
 	 * 
 	 */
-	private ArrayList<DFS> DFSList = new ArrayList<>();
-
-
-	private ArrayList<Integer> rmPath;
-
-
-
+	
 	private ArrayList<Integer> sortedFreqLabels;
 	
 	
@@ -112,9 +100,9 @@ public class DFSCode<NodeType, EdgeType> extends
 	}
 
 	/** used for the object pool */
-	// transient public DFSCode<NodeType,EdgeType> next;
+	// transient public SimpleDFSCode<NodeType,EdgeType> next;
 	/**
-	 * creates a new DFSCode
+	 * creates a new SimpleDFSCode
 	 * 
 	 * @param
 	 */
@@ -133,7 +121,6 @@ public class DFSCode<NodeType, EdgeType> extends
 	public DFSCode() {
 		// TODO Auto-generated constructor stub
 		nonCandidates = new HashMap<Integer, HashSet<Integer>>();
-		rmPath = new ArrayList<>();
 	}
 
 	public Graph getSingleGraph() {
@@ -185,7 +172,7 @@ public class DFSCode<NodeType, EdgeType> extends
 	@Override
 	public SearchLatticeNode<NodeType, EdgeType> extend(
 			final Extension<NodeType, EdgeType> extension) {
-		assert extension instanceof GSpanExtension : "DFSCode.extend(..) is just applicable for GSpanExtensions";
+		assert extension instanceof GSpanExtension : "SimpleDFSCode.extend(..) is just applicable for GSpanExtensions";
 		final GSpanExtension<NodeType, EdgeType> ext = (GSpanExtension<NodeType, EdgeType>) extension;
 
 		// clone current DFS-List
@@ -217,7 +204,7 @@ public class DFSCode<NodeType, EdgeType> extends
 			nextParents.set(nextLast.getNodeB(), nextLast);
 		}
 
-		// get "new" DFSCode object
+		// get "new" SimpleDFSCode object
 //		if(currentVariables==null)
 //			System.out.println("noooooo!!");
 		return new DFSCode<NodeType, EdgeType>(sortedFreqLabels,singleGraph,new HashMap<Integer, HashSet<Integer>>()).set(ext.getFragment().getHPlistGraph(), nextFirst, nextLast, nextParents);
@@ -479,12 +466,12 @@ public class DFSCode<NodeType, EdgeType> extends
 		return last;
 	}
 
-	/** @return the initial GSpanEdge of this DFSCode */
+	/** @return the initial GSpanEdge of this SimpleDFSCode */
 	public final GSpanEdge<NodeType, EdgeType> getFirst() {
 		return first;
 	}
 
-	/** @return the last GSpanEdge of this DFSCode */
+	/** @return the last GSpanEdge of this SimpleDFSCode */
 	public final GSpanEdge<NodeType, EdgeType> getLast() {
 		return last;
 	}
@@ -550,7 +537,7 @@ public class DFSCode<NodeType, EdgeType> extends
 		final HPGraph<NodeType, EdgeType> hp = me;
 
 		for (int node = hp.getMaxNodeIndex() - 1; node >= 0; --node) {
-			// try each node as potential start node for a smaller DFSCode
+			// try each node as potential start node for a smaller SimpleDFSCode
 			if (!hp.isValidNode(node)) {
 				continue;
 			}
@@ -564,14 +551,14 @@ public class DFSCode<NodeType, EdgeType> extends
 				final int edge = hp.getEdge(node, node);
 				if (edge != -1) {
 					if (nodeLabelIndex < ack.getLabelA()) {
-						return false; // a smaller DFSCode is found
+						return false; // a smaller SimpleDFSCode is found
 					}
 					if (nodeLabelIndex == ack.getLabelA()) {
 						// only DFSCodes will searched which starts same as this
 						final int edgeIndex = edge;
 						final int edgeLabelIndex = 0;
 						if (edgeLabelIndex < ack.getEdgeLabel()) {
-							return false; // a smaller DFSCode is found
+							return false; // a smaller SimpleDFSCode is found
 						}
 						if (edgeLabelIndex == ack.getEdgeLabel()) {
 							// equal starting edge found
@@ -585,7 +572,7 @@ public class DFSCode<NodeType, EdgeType> extends
 				}
 			} else { // no self-edges
 				if (hp.getEdge(node, node) != -1) {
-					return false; // a smaller DFSCode is found
+					return false; // a smaller SimpleDFSCode is found
 				}
 				if (nodeLabelIndex <= ack.getLabelA()) {
 					// only DFSCodes will searched which starts same as this
@@ -599,9 +586,9 @@ public class DFSCode<NodeType, EdgeType> extends
 				final MinExtension<NodeType, EdgeType> exts = getExtensions(0,
 						hp, node, usedEdges, usedNodes);
 				set.addAll(exts);
-				// recursiv extension to find a smaller DFSCode
+				// recursiv extension to find a smaller SimpleDFSCode
 				if (!isCan2(ack, set, 0, usedNodes, usedEdges, ackNodes, hp)) {
-					// a smaller DFSCode is found
+					// a smaller SimpleDFSCode is found
 					set.removeAndFreeAll(exts);
 					return false;
 				}
@@ -620,7 +607,7 @@ public class DFSCode<NodeType, EdgeType> extends
 	/**
 	 * helper function for the test of beeing canonical
 	 * 
-	 * extends current detected DFSCode and searches for new extensions
+	 * extends current detected SimpleDFSCode and searches for new extensions
 	 * 
 	 * @param ackEdge
 	 * @param set
@@ -646,7 +633,7 @@ public class DFSCode<NodeType, EdgeType> extends
 				// skip already used edges
 				if (!isCan2(ackEdge, set, lastNode, usedNodes, usedEdges,
 						ackNodes, graph)) {
-					// smaller DFSCode found
+					// smaller SimpleDFSCode found
 					set.relink(ack, next);
 					return false;
 				}
@@ -654,12 +641,12 @@ public class DFSCode<NodeType, EdgeType> extends
 				if (ack.getNodeB() == UNUSED) { // forward edge
 					final int tmp = ackEdge.compareTo(ack, lastNode + 1);
 					if (tmp > 0) {
-						// smaller DFSCode found
+						// smaller SimpleDFSCode found
 						set.relink(ack, next);
 						return false;
 					}
 					if (ackEdge.next == null || tmp < 0) {
-						// smaller DFSCode found
+						// smaller SimpleDFSCode found
 						set.relink(ack, next);
 						return true;
 					}
@@ -674,7 +661,7 @@ public class DFSCode<NodeType, EdgeType> extends
 					// recursiv search
 					if (!isCan2(ackEdge.next, set, lastNode + 1, usedNodes,
 							usedEdges, ackNodes, graph)) {
-						// smaller DFSCode found
+						// smaller SimpleDFSCode found
 						set.removeAndFreeAll(exts);
 						set.relink(ack, next);
 						return false;
@@ -686,12 +673,12 @@ public class DFSCode<NodeType, EdgeType> extends
 				} else { // backward edge
 					final int tmp = ackEdge.compareTo(ack, ack.getNodeB());
 					if (tmp > 0) {
-						// smaller DFSCode found
+						// smaller SimpleDFSCode found
 						set.relink(ack, next);
 						return false;
 					}
 					if (ackEdge.next == null || tmp < 0) {
-						// smaller DFSCode found
+						// smaller SimpleDFSCode found
 						set.relink(ack, next);
 						return true;
 					}
@@ -700,7 +687,7 @@ public class DFSCode<NodeType, EdgeType> extends
 					// recursiv search
 					if (!isCan2(ackEdge.next, set, lastNode, usedNodes,
 							usedEdges, ackNodes, graph)) {
-						// smaller DFSCode found
+						// smaller SimpleDFSCode found
 						set.relink(ack, next);
 						return false;
 					}
@@ -761,7 +748,7 @@ public class DFSCode<NodeType, EdgeType> extends
 	 * @param first
 	 * @param last
 	 * @param parents
-	 * @return a newly initialized DFSCode
+	 * @return a newly initialized SimpleDFSCode
 	 */
 	public DFSCode<NodeType, EdgeType> set(
 			final HPListGraph<NodeType, EdgeType> me,
@@ -820,71 +807,9 @@ public class DFSCode<NodeType, EdgeType> extends
 	public void setNodeType(int label) {
 		coreNodeType = 	label;
 	}
-	public int getCoreNodeType() {return coreNodeType;}
-
-
-    public void push(int from, int to, int fromLabel, int eLabel, int toLabel) {
-		DFS d = new DFS();
-		d.from = from;
-		d.to = to;
-		d.fromLabel = fromLabel;
-		d.eLabel = eLabel;
-		d.toLabel = toLabel;
-		DFSList.add(d);
-    }
-
-	public void pop() {DFSList.remove(DFSList.size()-1);}
-
-	public void toGraph(Graph g) {
-		g.clear();
-
-		for (DFS it : DFSList) {
-			g.resize(Math.max(it.from, it.to) + 1);
-
-			if (it.fromLabel != -1)
-				g.get(it.from).label = it.fromLabel;
-			if (it.toLabel != -1)
-				g.get(it.to).label = it.toLabel;
-
-			g.get(it.from).push(it.from, it.to, it.eLabel);
-			if (!g.directed)
-				g.get(it.to).push(it.to, it.from, it.eLabel);
-		}
-
-		g.buildEdge();
+	public int getCoreNodeType() {
+		return coreNodeType;
 	}
 
-	public ArrayList<Integer> buildRMPath() {
-		rmPath.clear();
 
-		int old_from = -1;
-
-		for (int i = DFSList.size() - 1; i >= 0; --i) {
-			if (DFSList.get(i).from < DFSList.get(i).to && // forward
-					(rmPath.isEmpty() || old_from == DFSList.get(i).to)) {
-				rmPath.add(i);
-				old_from = DFSList.get(i).from;
-			}
-		}
-
-		return rmPath;
-	}
-
-	/**
-	 * Return number of nodes in the graph.
-	 * @return number of nodes in the graph
-	 */
-	public int countNode() {
-		int nodeCount = 0;
-
-		for (DFS it : DFSList)
-			nodeCount = Math.max(nodeCount, Math.max(it.from,it.to) + 1);
-
-		return nodeCount;
-	}
 }
-
-
-
-
-

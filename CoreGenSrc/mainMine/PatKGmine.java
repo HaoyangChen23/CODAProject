@@ -31,6 +31,8 @@ import utilities.StopWatch;
 public class PatKGmine {
 
 	public static void main(String[] args) {
+
+
 	     // parse the command line arguments
 		CommandLineParser.parse(args);
 		Searcher<String, String> sr = null;
@@ -58,6 +60,29 @@ public class PatKGmine {
 			}
 			// Entrance
 			ArrayList<SearchLatticeNode<String, String>> result = sr.search();
+			System.out.println("Found " + result.size() + " nodes");
+
+//			// 使用BaselineProcessor处理结果
+//			BaselineProcessor<String, String> processor =
+//					new BaselineProcessor<>(result, Settings.k, sr.getKGraph());
+//			ArrayList<SearchLatticeNode<String, String>> selectedPatterns = processor.process();
+//
+//			// 输出最终结果
+//			System.out.println("Final Results:");
+//			System.out.println("Selected " + selectedPatterns.size() + " patterns");
+//			System.out.println("Final coverage: " +
+//					String.format("%.2f%%", processor.getFinalCoverage() * 100));
+//
+//			// 输出每个选中的模式
+//			for(int i = 0; i < selectedPatterns.size(); i++) {
+//				System.out.println("Pattern " + (i+1) + ":");
+//				System.out.println(selectedPatterns.get(i));
+//				System.out.println("MNI: " + selectedPatterns.get(i).getMNIfrequency());
+//			}
+
+
+
+
 			
 			watch.stop();
 			StopWatch genQueryTime = sr.getQueryTime();//elapsed time for query generation

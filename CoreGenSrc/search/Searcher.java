@@ -266,7 +266,7 @@ public class Searcher<NodeType, EdgeType> {
 				final Collection<SearchLatticeNode<NodeType, EdgeType>> children = qryExtender.getChildren(pattern);
 				for (SearchLatticeNode<NodeType, EdgeType> child : children) {
 					final Canonizable can = (Canonizable) child;
-					if (!can.isCanonical()) {// if the child pattern is minimum DFSCode
+					if (!can.isCanonical()) {// if the child pattern is minimum SimpleDFSCode
 //						System.out.println("Not Canonizable!!!");
 						continue;
 					}
