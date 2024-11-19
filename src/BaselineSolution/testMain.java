@@ -19,8 +19,8 @@ public class testMain {
     StopWatch watch = new StopWatch();
     watch.start();
 
-    String graphFile = Settings.datasetsFolder + Settings.fileName; // knowledge graph file folder
-    String coreFile = Settings.datasetsFolder + Settings.coreFileName; // core pattern file folder
+    String graphFile = Settings.datasetsFolder + Settings.fileName; // Knowledge graph file folder
+    String coreFile = Settings.datasetsFolder + Settings.coreFileName; // Core pattern file folder
 
     File inFile = new File(graphFile);
     if (Settings.UB && !Settings.HMT) {
@@ -33,28 +33,35 @@ public class testMain {
     }
 
     try {
-      ////////////////////////////////////
-      // 生成所有的满足MNI的基于CorePatterns拓展的图模式///////////////////////////////////////////////////////////////
-      // Initializations: graph loading
+      ////////////////////////////////////////
+      // 生成所有满足 MNI 的基于核心模式的图模式 //
+      ////////////////////////////////////////
+      // Initializations: Graph loading 使用 Searcher 类加载图数据
       sr = new Searcher<Integer, Integer>(graphFile, coreFile);
       // Optimization I: meta index
       if (!Settings.HMT) {
         sr.initialize();
       }
-      // Entrance
+      // Entrance 在图中搜索模式
       ArrayList<SearchLatticeNode<Integer, Integer>> result = sr.search();
       System.out.println("Number of search results: " + result.size());
-      //            int totalNodes = sr.getKGraph().getNumberOfNodes();
-      ////////////////////////////////////
-      // 贪心选择出覆盖率最大的TopK个图模式///////////////////////////////////////////////////////////////
+      // int totalNodes = sr.getKGraph().getNumberOfNodes();
+
+      /////////////////////////////////////////
+      // 使用贪心算法选择覆盖率最大的前 K 个图模式 //
+      /////////////////////////////////////////
       StopWatch greedySelectionWatch = new StopWatch();
       greedySelectionWatch.start();
 
       ArrayList<SimpleDFSCode> dfsCodes = DFSCodeConverter.convertResultList(result);
+
+      // 读取输入图
       FileReader reader = new FileReader(inFile);
       Graph TRANS = new Graph();
       BufferedReader br = new BufferedReader(reader);
       TRANS.read(br);
+
+      // 使用贪心选择算法选择前 K 个模式
       GreedySelector gr = new GreedySelector(dfsCodes, TRANS);
       selectedPatterns = gr.selectTopKPatterns(dfsCodes, Settings.k);
       System.out.println("Number of selected patterns: " + selectedPatterns.size());
@@ -63,7 +70,9 @@ public class testMain {
       double coverage = gr.calculateCoverage();
 
       greedySelectionWatch.start();
-      ///////////////////////////////////////////////////////////////////////////////////////////////////
+      //////////////////////////////
+      // 输出结果、统计信息和运行时间 //
+      /////////////////////////////
       watch.stop();
       StopWatch genQueryTime = sr.getQueryTime(); // elapsed time for query generation
       double elapsedTime = watch.getElapsedTime() / 1000.0 - genQueryTime.getElapsedTime() / 1000.0;
@@ -71,10 +80,11 @@ public class testMain {
       String runningTime = dtest1.format(elapsedTime);
       System.out.println(
           "elapsedTime of baseline solution:" + runningTime); // elapsed time of this algorithm
-      //            System.out.println("Selected patterns:" + selector.getSelectedPatterns());
-      // output: write txt files
+      // System.out.println("Selected patterns:" + selector.getSelectedPatterns());
+
+      // Output: write txt files 将结果输出到文件
       FileWriter fw;
-      // out put file name
+      // Output file name 输出文件名
       String outfName =
           Settings.coreFileName.substring(0, Settings.coreFileName.length() - 3)
               + "Top"
@@ -122,11 +132,9 @@ public class testMain {
 
         fw.close();
       } catch (IOException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
       }
     } catch (Exception e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
     }
   }
