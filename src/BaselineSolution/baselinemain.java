@@ -1,21 +1,21 @@
-//package BaselineSolution;
+// package BaselineSolution;
 //
 //
-//import dataStructures.Frequency;
-//import search.*;
-//import utilities.CommandLineParser;
-//import utilities.Settings;
-//import utilities.StopWatch;
+// import dataStructures.Frequency;
+// import search.*;
+// import utilities.CommandLineParser;
+// import utilities.Settings;
+// import utilities.StopWatch;
 //
-//import java.io.FileWriter;
-//import java.io.IOException;
-//import java.text.DecimalFormat;
-//import java.text.SimpleDateFormat;
-//import java.util.ArrayList;
-//import java.util.Date;
-//import java.util.HashMap;
+// import java.io.FileWriter;
+// import java.io.IOException;
+// import java.text.DecimalFormat;
+// import java.text.SimpleDateFormat;
+// import java.util.ArrayList;
+// import java.util.Date;
+// import java.util.HashMap;
 //
-//public class baselinemain {
+// public class baselinemain {
 //    public static void main(String[] args) {
 //        // 解析命令行参数
 //        //For test
@@ -89,7 +89,8 @@
 //
 //
 //            // 输出结果
-//            String outfName = Settings.coreFileName.substring(0, Settings.coreFileName.length() - 3)
+//            String outfName = Settings.coreFileName.substring(0, Settings.coreFileName.length() -
+// 3)
 //                    + "Coverage_Top" + Settings.k + ".txt";
 //
 //            try (FileWriter fw = new FileWriter(outfName)) {
@@ -136,4 +137,4 @@
 //
 //    }
 //
-//}
+// }

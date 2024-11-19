@@ -1,78 +1,74 @@
 package main;
 
 import java.util.ArrayList;
-
 import model.Edge;
 import model.Graph;
 import model.History;
 import model.Vertex;
 
 public class Misc {
-    public static boolean getForwardRoot(Graph g, Vertex v, ArrayList<Edge> result) {
-        result.clear();
-        for (Edge it : v.edge) {
-            assert (it.to >= 0 && it.to < g.size());
-            if (v.label <= g.get(it.to).label)
-                result.add(it);
-        }
-
-        return !result.isEmpty();
+  public static boolean getForwardRoot(Graph g, Vertex v, ArrayList<Edge> result) {
+    result.clear();
+    for (Edge it : v.edge) {
+      assert (it.to >= 0 && it.to < g.size());
+      if (v.label <= g.get(it.to).label) result.add(it);
     }
 
-    public static Edge getBackward(Graph graph, Edge e1, Edge e2, History history) {
-        if (e1 == e2)
-            return null;
+    return !result.isEmpty();
+  }
 
-        assert (e1.from >= 0 && e1.from < graph.size());
-        assert (e1.to >= 0 && e1.to < graph.size());
-        assert (e2.to >= 0 && e2.to < graph.size());
+  public static Edge getBackward(Graph graph, Edge e1, Edge e2, History history) {
+    if (e1 == e2) return null;
 
-        for (Edge it : graph.get(e2.to).edge) {
-            if (history.hasEdge(it.id))
-                continue;
+    assert (e1.from >= 0 && e1.from < graph.size());
+    assert (e1.to >= 0 && e1.to < graph.size());
+    assert (e2.to >= 0 && e2.to < graph.size());
 
-            if ((it.to == e1.from) && ((e1.eLabel < it.eLabel)
-                    || (e1.eLabel == it.eLabel) && (graph.get(e1.to).label <= graph.get(e2.to).label))) {
-                return it;
-            }
-        }
+    for (Edge it : graph.get(e2.to).edge) {
+      if (history.hasEdge(it.id)) continue;
 
-        return null;
+      if ((it.to == e1.from)
+          && ((e1.eLabel < it.eLabel)
+              || (e1.eLabel == it.eLabel) && (graph.get(e1.to).label <= graph.get(e2.to).label))) {
+        return it;
+      }
     }
 
-    public static boolean getForwardPure(Graph graph, Edge e, int minLabel, History history, ArrayList<Edge> result) {
-        result.clear();
+    return null;
+  }
 
-        assert (e.to >= 0 && e.to < graph.size());
+  public static boolean getForwardPure(
+      Graph graph, Edge e, int minLabel, History history, ArrayList<Edge> result) {
+    result.clear();
 
-        // Walk all edges leaving from vertex e.to.
-        for (Edge it : graph.get(e.to).edge) {
-            // -e. [e.to] -it. [it.to]
-            assert (it.to >= 0 && it.to < graph.size());
-            if (minLabel > graph.get(it.to).label || history.hasVertex(it.to))
-                continue;
+    assert (e.to >= 0 && e.to < graph.size());
 
-            result.add(it);
-        }
+    // Walk all edges leaving from vertex e.to.
+    for (Edge it : graph.get(e.to).edge) {
+      // -e. [e.to] -it. [it.to]
+      assert (it.to >= 0 && it.to < graph.size());
+      if (minLabel > graph.get(it.to).label || history.hasVertex(it.to)) continue;
 
-        return !result.isEmpty();
+      result.add(it);
     }
 
-    public static boolean getForwardRmPath(Graph graph, Edge e, int minLabel, History history, ArrayList<Edge> result) {
-        result.clear();
-        assert (e.to >= 0 && e.to < graph.size());
-        assert (e.from >= 0 && e.from < graph.size());
-        int toLabel = graph.get(e.to).label;
+    return !result.isEmpty();
+  }
 
-        for (Edge it : graph.get(e.from).edge) {
-            int toLabel2 = graph.get(it.to).label;
-            if (e.to == it.to || minLabel > toLabel2 || history.hasVertex(it.to))
-                continue;
+  public static boolean getForwardRmPath(
+      Graph graph, Edge e, int minLabel, History history, ArrayList<Edge> result) {
+    result.clear();
+    assert (e.to >= 0 && e.to < graph.size());
+    assert (e.from >= 0 && e.from < graph.size());
+    int toLabel = graph.get(e.to).label;
 
-            if (e.eLabel < it.eLabel || (e.eLabel == it.eLabel && toLabel <= toLabel2))
-                result.add(it);
-        }
+    for (Edge it : graph.get(e.from).edge) {
+      int toLabel2 = graph.get(it.to).label;
+      if (e.to == it.to || minLabel > toLabel2 || history.hasVertex(it.to)) continue;
 
-        return !result.isEmpty();
+      if (e.eLabel < it.eLabel || (e.eLabel == it.eLabel && toLabel <= toLabel2)) result.add(it);
     }
+
+    return !result.isEmpty();
+  }
 }
