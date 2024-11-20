@@ -3,7 +3,7 @@
 ### 项目结构
 
 `src/main`, `src/model` 部分代码来自于 TED<br/>
-`CodeGenSrc` 部分代码来自于 FastPat+
+`CoreGenSrc` 部分代码来自于 FastPat+
 
 ### 相关项目
 
