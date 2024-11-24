@@ -6,8 +6,10 @@ public class Arguments {
 	  private static Arguments arguments;
       private String[] args;
       public static String inFilePath  =  "/Users/leonchen/Nutstore Files/CODA_PREPARATION/CODAProject/topKDiversifiedMiner/dataset/AIDS40k";
+      public static String labelFilePath  = "/Users/leonchen/Nutstore Files/CODA_PREPARATION/CODAProject/topKDiversifiedMiner/dataset/labels.txt";
+      public static String edgeFilePath  = "/Users/leonchen/Nutstore Files/CODA_PREPARATION/CODAProject/topKDiversifiedMiner/dataset/edgelist.txt";
       public static String coreFilePath = "/Users/leonchen/Nutstore Files/CODA_PREPARATION/CODAProject/topKDiversifiedMiner/dataset/AIDS40k_core.txt";
-      public static String outFilePath =  "/Users/leonchen/Nutstore Files/CODA_PREPARATION/CODAProject/topKDiversifiedMiner/dataset/AIDS40k_result.txt";
+      public static String outFilePath =  "/Users/leonchen/Nutstore Files/CODA_PREPARATION/CODAProject/topKDiversifiedMiner/dataset/result.txt";
      // String inFilePath  =  "pubchem23238"; 
      //  String inFilePath  =  "pubchem1000000clean.txt"; 
      // String outFilePath =  "pubchem23238_result.txt";

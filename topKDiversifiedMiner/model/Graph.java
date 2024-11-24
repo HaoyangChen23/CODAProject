@@ -65,7 +65,7 @@ public class Graph extends ArrayList<Vertex> {
                     }
                 } else if (result.get(0).equals("v") && result.size() >= 3) {
                     // int id = Integer.parseInt(result.get(1));
-                    Vertex vex = new Vertex();
+                    Vertex vex = new Vertex(0);
                     vex.label = Integer.parseInt(result.get(2));
                     this.add(vex);
                 } else if (result.get(0).equals("e") && result.size() >= 4) {
@@ -91,6 +91,7 @@ public class Graph extends ArrayList<Vertex> {
 
         return is;
     }
+
 
     public void write(FileWriter os) throws IOException {
         String buf;
@@ -148,7 +149,7 @@ public class Graph extends ArrayList<Vertex> {
 
     void resize(int size) {
         while (this.size() < size) {
-            this.add(new Vertex());
+            this.add(new Vertex(0));
         }
     }
 }

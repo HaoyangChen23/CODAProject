@@ -26,6 +26,7 @@ import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
+import java.util.stream.Collectors;
 
 public class CODAProcessor {
     private Graph TRANS;
@@ -97,6 +98,7 @@ public class CODAProcessor {
         arg = arguments;
         read(reader);
         readcore(coreReader);
+        read(Arguments.labelFilePath,Arguments.edgeFilePath);
         Long Time1 = System.currentTimeMillis();
         if (arg.hasInitialPatternGenerator && !arg.strategy.equals("greedy")) {
             InitialPatternGenerator();
@@ -279,6 +281,41 @@ public class CODAProcessor {
         }
         read.close();
         // System.out.println("total edges: " + num);
+    }
+    private void read(String labelFile, String edgeFile) throws IOException {
+        // 读取顶点标签文件
+        BufferedReader labelReader = new BufferedReader(new FileReader(labelFile));
+        Map<Integer, Integer> vertexLabels = new HashMap<>();
+        String line;
+        while ((line = labelReader.readLine()) != null) {
+            String[] items = line.split("\\s+");
+            vertexLabels.put(Integer.parseInt(items[0]), Integer.parseInt(items[1]));
+        }
+        labelReader.close();
+
+        // 读取边文件
+        BufferedReader edgeReader = new BufferedReader(new FileReader(edgeFile));
+        Graph g = new Graph();
+
+        // 先创建所有顶点
+        for (Map.Entry<Integer, Integer> entry : vertexLabels.entrySet()) {
+            while (g.size() <= entry.getKey()) {
+                g.add(new Vertex(0)); // 临时标签
+            }
+            g.get(entry.getKey()).label = entry.getValue();
+        }
+
+        // 添加边
+        while ((line = edgeReader.readLine()) != null) {
+            String[] items = line.split("\\s+");
+            int from = Integer.parseInt(items[0]);
+            int to = Integer.parseInt(items[1]);
+            // 由于没有边标签，统一设为1
+            g.get(from).edge.add(new Edge(to, 1, from));
+        }
+        edgeReader.close();
+
+        TRANS = g;
     }
 
     private void InitialPatternGenerator() throws IOException {
@@ -465,7 +502,7 @@ public class CODAProcessor {
 
             // Found a frequent node label, report it.
             Graph g = new Graph(directed);
-            Vertex v = new Vertex();
+            Vertex v = new Vertex(0);
             v.label = frequent_label;
             g.add(v);
 
@@ -977,9 +1014,11 @@ public class CODAProcessor {
                 System.out.println("Before Swapping, Number of covered edges: " + allCoveredEdges.size());
                 int totalegdes = 0;
                 totalegdes = TRANS.getEdgeSize();
+                int uniqueCoveredEdges = new HashSet<>(allCoveredEdges.stream().map(e -> e % TRANS.getEdgeSize()).collect(Collectors.toList())).size();
 
                 System.out.println("totalegdes : " + totalegdes);
-                System.out.println("Coverage rate : " + allCoveredEdges.size() * 1.0 / totalegdes);
+                System.out.println("uniqueCoveredEdges : " + uniqueCoveredEdges);
+                System.out.println("Coverage rate : " + uniqueCoveredEdges * 1.0 / totalegdes);
 
                 if (arg.isSimpleIndex && arg.strategy.equals("topk")) {
                     int patternid_min = 0;
@@ -1094,7 +1133,7 @@ public class CODAProcessor {
                     // update  CoveredEdges_OriginalGraphs
                     CoveredEdges_OriginalGraphs.clear();
                     for (Integer edgeid : allCoveredEdges) {
-                        Integer gid = edgeid / 1000;
+                        Integer gid = edgeid % TRANS.getEdgeSize();
                         Set<Integer> temp = CoveredEdges_OriginalGraphs.get(gid);
                         if (temp == null) temp = new HashSet<Integer>();
                         temp.add(edgeid);

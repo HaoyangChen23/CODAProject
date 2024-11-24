@@ -338,7 +338,7 @@ public class CODASimplifiedProcessor {
 
             // Found a frequent node label, report it.
             Graph g = new Graph(directed);
-            Vertex v = new Vertex();
+            Vertex v = new Vertex(0);
             v.label = frequent_label;
             g.add(v);
 

@@ -5,6 +5,15 @@ public class Edge {
     public int to = 0;
     public int eLabel = 0;
     public int id = 0;
-    
-    
+
+
+    public Edge(int to, int i, int from) {
+        this.to = to;
+        this.from = from;
+        this.eLabel = i;
+    }
+
+    public Edge() {
+
+    }
 }

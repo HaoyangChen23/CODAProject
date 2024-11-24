@@ -6,7 +6,7 @@ public class Vertex {
     public int label;
     public ArrayList<Edge> edge;
 
-    public Vertex() {
+    public Vertex(int i) {
         edge = new ArrayList<>();
     }
 

@@ -23,30 +23,36 @@ public class CODAMain {
         File inFile = new File(arguments.inFilePath);
 		File coreFile = new File(arguments.coreFilePath) ;
         File outFile = new File(arguments.outFilePath);
+		File labelFile = new File(arguments.labelFilePath);
+		File edgeFile = new File(arguments.edgeFilePath);
         try (FileReader reader = new FileReader(inFile)) {
 			try(FileReader coreReader = new FileReader(coreFile)) {
-			try (FileWriter writer = new FileWriter(outFile)) {
-				if (arguments.isSimplified) {
-					CODASimplifiedProcessor processor = new CODASimplifiedProcessor();
-					System.out.println("Start CODASimplifiedProcessor...");
-					processor.run(reader, writer, arguments);
-					System.out.println("Finished CODASimplifiedProcessor...");
+				try(FileReader labelReader = new FileReader(labelFile)) {
+					try (FileReader edgeReader = new FileReader(edgeFile)) {
+						try (FileWriter writer = new FileWriter(outFile)) {
 
-				} else {
-					if (arguments.isLightVersion) {
+							if (arguments.isSimplified) {
+								CODASimplifiedProcessor processor = new CODASimplifiedProcessor();
+								System.out.println("Start CODASimplifiedProcessor...");
+								processor.run(reader, writer, arguments);
+								System.out.println("Finished CODASimplifiedProcessor...");
+
+							} else {
+								if (arguments.isLightVersion) {
 //						CODALightProcessor processor = new CODALightProcessor();
-						System.out.println("Start CODALightProcessor...");
+									System.out.println("Start CODALightProcessor...");
 //						processor.run(reader, writer, arguments);
-						System.out.println("Finished CODALightProcessor...");
-					} else {
-						CODAProcessor processor = new CODAProcessor();
-						System.out.println("Start CODAProcessor...");
-						processor.run(reader, coreReader, writer, arguments);
-						System.out.println("Finished CODAProcessor...");
+									System.out.println("Finished CODALightProcessor...");
+								} else {
+									CODAProcessor processor = new CODAProcessor();
+									System.out.println("Start CODAProcessor...");
+									processor.run(reader, coreReader, writer, arguments);
+									System.out.println("Finished CODAProcessor...");
+								}
+							}
+						}
 					}
 				}
-
-			}
 		}
 	}
         Long Time2 = System.currentTimeMillis();
