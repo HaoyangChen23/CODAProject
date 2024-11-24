@@ -7,9 +7,18 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import static model.CommandLineParser.*;
+
 public class CODAMain {
     public static void main(String[] args) throws IOException {
-    	Long Time1 = System.currentTimeMillis();	
+    	Long Time1 = System.currentTimeMillis();
+		if (args.length == 1 && isJsonString(args[0])) {
+
+			Jsonparse(args);
+		} else {
+
+			parse(args);
+		}
         Arguments arguments = Arguments.getInstance(args);
         File inFile = new File(arguments.inFilePath);
 		File coreFile = new File(arguments.coreFilePath) ;

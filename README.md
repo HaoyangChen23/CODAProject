@@ -4,7 +4,7 @@ This is our implementation for the paper:
 
 CODA: Towards Discovering Core-based tOp-𝑘 Edge-Diversified pAtterns in a Single Large Graph
 
-Ted is implemented with Java (JDK23).
+CODA is implemented with Java (JDK23).
 
 # Environments
 
@@ -35,9 +35,9 @@ Step 1: Parameter Setting in main/Arguments.java.
 
         1） hyperparameter setting. 
         
-             inFilePath  =  "Flickr";  outFilePath =  "Flickr_result.txt"; minSup  =  1;  swapcondition  = "swap1"; maxNodeNum = 11;
+             inFilePath  =  "Flickr";  coreFilePath  = "Flickr_core" outFilePath =  "Flickr_result"; minSup  =  1;  swapcondition  = 
              
-             numberofpatterns = 5;      numberofgraphs   = 40000;  isPESIndex  = true;
+             "swap1"; maxNodeNum = 11;numberofpatterns = 5;      numberofgraphs   = 40000;  isPESIndex  = true;
              
         2)  parameter setting for optimization strategies
         

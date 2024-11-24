@@ -5,34 +5,34 @@ import java.util.Scanner;
 public class Arguments {
 	  private static Arguments arguments;
       private String[] args;
-      String inFilePath  =  "/Users/leonchen/Nutstore Files/CODA_PREPARATION/TEDProject/topKDiversifiedMiner/dataset/AIDS40k";
-      String coreFilePath = "/Users/leonchen/Nutstore Files/CODA_PREPARATION/TEDProject/topKDiversifiedMiner/dataset/AIDS40k_core.txt";
-      String outFilePath =  "/Users/leonchen/Nutstore Files/CODA_PREPARATION/TEDProject/topKDiversifiedMiner/dataset/AIDS40k_result.txt";
+      public static String inFilePath  =  "/Users/leonchen/Nutstore Files/CODA_PREPARATION/CODAProject/topKDiversifiedMiner/dataset/AIDS40k";
+      public static String coreFilePath = "/Users/leonchen/Nutstore Files/CODA_PREPARATION/CODAProject/topKDiversifiedMiner/dataset/AIDS40k_core.txt";
+      public static String outFilePath =  "/Users/leonchen/Nutstore Files/CODA_PREPARATION/CODAProject/topKDiversifiedMiner/dataset/AIDS40k_result.txt";
      // String inFilePath  =  "pubchem23238"; 
      //  String inFilePath  =  "pubchem1000000clean.txt"; 
      // String outFilePath =  "pubchem23238_result.txt";
      // String inFilePath  =  "emolecul10000"; 
       //  String outFilePath =  "emolecul10000_result.txt";
-      public long minSup        =  1;
+      public static long minSup        =  1;
       //long minNodeNum = 0;
       //long maxNodeNum = Long.MAX_VALUE;
       
-      String  swapcondition  = "swap1";  //"swap1", "swap2", "swapalpha"
-      Double  swapAlpha    = 0.99;
-      long minNodeNum = 1;
-      long maxNodeNum = 11;
-      String strategy  = "greedy";
+      public static String  swapcondition  = "swap1";  //"swap1", "swap2", "swapalpha"
+      public static Double  swapAlpha    = 0.99;
+      public static long minNodeNum = 1;
+      public static long maxNodeNum = 11;
+      String strategy  = "topk";
        // String strategy  = "greedy";
-      Integer numberofpatterns = 5;
+       public static Integer numberofpatterns = 5;
       Integer numberofgraphs   = 40000;
-      
-      Boolean hasPRM = true;
-      Boolean isPESIndex  = false;
-      Boolean isSimpleIndex = !isPESIndex;
-      
-      
-      Boolean hasDSS = true;
-      Boolean hasInitialPatternGenerator  = true;
+
+      public static Boolean hasPRM = true;
+      public static Boolean isPESIndex  = false;
+      public static Boolean isSimpleIndex = !isPESIndex;
+
+
+      public static boolean hasDSS = true;
+      public static Boolean hasInitialPatternGenerator  = true;
       
      // double maintainTime = 0;
       

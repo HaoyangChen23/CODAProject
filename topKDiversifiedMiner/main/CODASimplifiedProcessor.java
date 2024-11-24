@@ -248,7 +248,7 @@ public class CODASimplifiedProcessor {
            // if(count!= 23019 && count!= 22812)
            // num += g.getEdgeSize();
             
-            if(count == arg.numberofgraphs) break; 
+//            if(count == arg.numberofgraphs) break;
         }
         read.close();
        // System.out.println("total edges: " + num);
